@@ -1,0 +1,501 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Group - PayJoint{% endblock %}
+
+{% block extra_head %}
+    <style type="text/tailwindcss">
+        :root {
+            --background: #000814;
+            --primary-accent: #001d3d;
+            --secondary-accent: #003566;
+            --highlight: #ffc300;
+            --highlight-hover: #ffd60a;
+            --text-primary: #ffffff;
+            --text-secondary: #adb5bd;
+
+            --background-deep-navy: #000814;
+            --royal-blue-dark: #001d3d;
+            --royal-blue-medium: #003566;
+            --gold-yellow-main: #ffc300; /* Main gold color */
+            --gold-yellow-highlight: #ffd60a; /* Darker gold for hover/active */
+            --text-light: #ffffff;
+            --text-muted: #adb5bd;
+
+            --green-color: #25D366; /* Green color for Trip icon */
+        }
+        body {
+            background-color: var(--background-deep-navy);
+            color: var(--text-light);
+            font-family: 'Roboto', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .form-input-style {
+            @apply w-full rounded-lg border-2 border-[var(--text-muted)] bg-[var(--royal-blue-medium)] px-4 py-3 text-white placeholder-gray-400 transition-colors focus:border-[var(--gold-yellow-highlight)] focus:outline-none focus:ring-0;
+        }
+        .image-preview {
+            @apply w-24 h-24 rounded-full bg-[var(--royal-blue-medium)] flex items-center justify-center border-2 border-dashed border-[var(--royal-blue-medium)] overflow-hidden;
+        }
+        .image-preview img {
+            @apply w-full h-full object-cover;
+        }
+        .image-upload-icon {
+             @apply w-10 h-10 text-gray-400 group-hover:text-[var(--gold-yellow-highlight)] transition-colors;
+        }
+        input[type="file"] {
+            @apply absolute inset-0 w-full h-full opacity-0 cursor-pointer;
+        }
+
+        input[type="radio"][name="group_type"] {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border-width: 0 !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            pointer-events: none !important;
+            z-index: -1; /* Ensure it's behind the label */
+        }
+
+        /* ********************************************** */
+        /* REVISED: group-type-label STYLES FOR SELECTED STATE */
+        /* Now uses .is-selected class managed by JS */
+        /* ********************************************** */
+        .group-type-label {
+            @apply flex flex-col items-center justify-center w-24 h-24 rounded-lg border-2 border-[var(--royal-blue-medium)] bg-[var(--royal-blue-medium)] text-white font-bold cursor-pointer transition-all duration-200 select-none shadow-md;
+            @apply hover:border-[var(--gold-yellow-highlight)] hover:scale-105;
+
+            /* Styles when 'is-selected' class is present (managed by JS) */
+            &.is-selected {
+                background-color: var(--gold-yellow-main);
+                color: var(--background-deep-navy);
+                border-color: var(--gold-yellow-main);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 4px var(--gold-yellow-highlight) !important; /* Tailwind shadow-xl + ring */
+                transform: scale(1.1) rotate(1deg); /* Tailwind scale-110 rotate-1 */
+            }
+            &.is-selected svg { /* Target SVG directly within selected label */
+                fill: var(--background-deep-navy) !important;
+                stroke: var(--background-deep-navy) !important;
+            }
+            &.is-selected svg path, &.is-selected svg circle {
+                fill: var(--background-deep-navy) !important;
+                stroke: var(--background-deep-navy) !important;
+            }
+
+
+            /* Icon color changes */
+            /* Default icon colors (white) */
+            fill: currentColor;
+            stroke: currentColor;
+            @apply [&_svg]:transition-colors [&_svg_path]:transition-colors [&_svg_circle]:transition-colors;
+        }
+
+        /* NEW: Specific rule for Trip icon when selected (override to green) - uses .is-selected */
+        label.group-type-label.is-selected[for$="_0"] svg,
+        label.group-type-label.is-selected[for$="_0"] svg path,
+        label.group-type-label.is-selected[for$="_0"] svg circle {
+            fill: var(--text-light) !important;
+            stroke: var(--text-light) !important;
+        }
+
+        /* NEW: Specific rule for Home icon when selected (override to white) - uses .is-selected */
+        label.group-type-label.is-selected[for$="_1"] svg,
+        label.group-type-label.is-selected[for$="_1"] svg path,
+        label.group-type-label.is-selected[for$="_1"] svg circle {
+            fill: var(--text-light) !important;
+            stroke: var(--text-light) !important;
+        }
+
+        /* NEW: Specific rule for Others icon when selected (override to white) - uses .is-selected */
+        label.group-type-label.is-selected[for$="_2"] svg,
+        label.group-type-label.is-selected[for$="_2"] svg path,
+        label.group-type-label.is-selected[for$="_2"] svg circle {
+            fill: var(--text-light) !important;
+            stroke: var(--text-light) !important;
+        }
+
+        /* Specific style for Django-rendered checkbox input */
+        input[type="checkbox"].django-checkbox-style {
+            @apply rounded border-gray-300 text-[var(--gold-yellow-main)] focus:ring-[var(--gold-yellow-main)];
+        }
+    </style>
+{% endblock %}
+
+{% block optional_header_content %}
+{% endblock optional_header_content %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col bg-[var(--background-deep-navy)] py-8 px-4 sm:px-6 lg:px-8">
+    <header class="w-full max-w-5xl mx-auto mb-8">
+        <a href="{% url 'groups:dashboard' %}" class="inline-flex items-center text-[var(--highlight-gold-yellow)] hover:text-[var(--highlight-gold-yellow-hover)] transition-colors duration-200">
+            <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="ml-1 text-lg font-medium">Back to Dashboard</span>
+        </a>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center">
+        <div class="w-full max-w-3xl space-y-10 rounded-2xl bg-[var(--royal-blue-dark)] p-8 sm:p-10 lg:p-12 shadow-2xl border border-[var(--royal-blue)]">
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-white mb-2">Create a New Group</h2>
+                <p class="text-lg text-[var(--text-muted)]">Organize your expenses with friends, easily.</p>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="space-y-8">
+                {% csrf_token %}
+                {% if messages %}
+                    <div class="mb-6">
+                        {% for message in messages %}
+                            <div class="p-4 rounded-lg mb-3 text-base
+                                {% if 'success' in message.tags %}bg-green-700 text-white{% elif 'error' in message.tags %}bg-red-700 text-white{% elif 'info' in message.tags %}bg-blue-700 text-white{% elif 'warning' in message.tags %}bg-yellow-700 text-white{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {# Section 1: Basic Group Info #}
+                <div class="bg-[var(--royal-blue)] p-6 rounded-xl shadow-inner space-y-6">
+                    <h3 class="text-2xl font-semibold text-white mb-4">Group Essentials</h3>
+                    <div class="flex flex-col sm:flex-row items-center space-y-6 sm:space-y-0 sm:space-x-6">
+                        <div class="relative group flex-shrink-0">
+                            <div class="image-preview group-hover:border-[var(--gold-yellow-highlight)] transition-colors" id="image-preview-container">
+                                {% if form.instance.image %}
+                                    <img id="preview-image" src="{{ form.instance.image.url }}" alt="Group Image Preview" class="" />
+                                    <svg class="image-upload-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                {% else %}
+                                    <svg class="image-upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                    <img id="preview-image" src="" alt="Group Image Preview" class="hidden" />
+                                {% endif %}
+                            </div>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                {% for error in form.image.errors %}
+                                    <p class="text-red-400 text-xs italic mt-1">{{ error }}</p>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow w-full space-y-4">
+                            <div>
+                                <label class="sr-only" for="{{ form.name.id_for_label }}">Group Name</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    {% for error in form.name.errors %}
+                                        <p class="text-red-400 text-xs italic mt-1">{{ error }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="sr-only" for="{{ form.description.id_for_label }}">Group Description</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    {% for error in form.description.errors %}
+                                        <p class="text-red-400 text-xs italic mt-1">{{ error }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Section 2: Group Type & Conditional Fields #}
+                <div class="bg-[var(--royal-blue)] p-6 rounded-xl shadow-inner space-y-6">
+                    <h3 class="text-2xl font-semibold text-white mb-4">Group Type</h3>
+                    <div class="flex flex-wrap gap-4 justify-center">
+                        {% for radio in form.group_type %}
+                            {# Removed the 'relative' div here to ensure direct sibling relationship for peer #}
+                            {{ radio.tag }} {# This renders <input type="radio" ... id="..." class="peer"> #}
+                            <label for="{{ radio.id_for_label }}" class="group-type-label">
+                                {% if radio.data.value == 'Trip' %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="mb-2 h-10 w-10" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M2.5 19.5l19-7a1 1 0 0 0 0-1.9l-19-7A1 1 0 0 0 1 4.5v3a1 1 0 0 0 .76.97l11.24 2.53-11.24 2.53A1 1 0 0 0 1 16.5v3a1 1 0 0 0 1.5.97zM21 12l-9-2V4.5a.5.5 0 0 1 1 0V10l9 2z"/>
+                                    </svg>
+                                    Trip
+                                {% elif radio.data.value == 'Home' %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="mb-2 h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h3m10-11v11a1 1 0 01-1 1h-3m-6 0h6" />
+                                    </svg>
+                                    Home
+                                {% elif radio.data.value == 'Others' %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="mb-2 h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <circle cx="6" cy="12" r="2" />
+                                        <circle cx="12" cy="12" r="2" />
+                                        <circle cx="18" cy="12" r="2" />
+                                    </svg>
+                                    Others
+                                {% endif %}
+                            </label>
+                        {% endfor %}
+                    </div>
+                    {% if form.group_type.errors %}
+                        {% for error in form.group_type.errors %}
+                            <p class="text-red-400 text-xs italic mt-1 text-center">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+
+                    {# Conditional Budget/Type-Specific Fields Container #}
+                    <div id="budget-fields-container" class="space-y-6 pt-4">
+                        {# General Budget (for Trip/Others) #}
+                        <div id="general-budget-field" class="space-y-4 hidden">
+                            <div>
+                                <label for="{{ form.budget.id_for_label }}" class="block text-base font-medium text-white mb-1">{{ form.budget.label }}</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-lg text-[var(--text-muted)]">₹</span>
+                                    {{ form.budget }}
+                                    {% if form.budget.errors %}
+                                        {% for error in form.budget.errors %}
+                                            <p class="text-red-400 text-xs italic mt-1">{{ error }}</p>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <p class="mt-1 text-sm text-[var(--text-muted)]">Optional budget for the entire group.</p>
+                            </div>
+                        </div>
+
+                        {# Trip specific fields #}
+                        <div id="trip-fields" class="space-y-4 hidden">
+                            <h4 class="text-xl font-semibold text-white mb-4 pt-2 border-t border-[var(--royal-blue-dark)]">Trip Details</h4>
+                            <div class="flex flex-col sm:flex-row sm:space-x-4 mt-4">
+                                <div class="flex-1">
+                                    <label for="{{ form.start_date.id_for_label }}" class="block text-base font-medium text-white mb-1">{{ form.start_date.label }} <span class="text-[var(--gold-yellow-main)]">*</span></label>
+                                    {{ form.start_date }}
+                                    {% if form.start_date.errors %}
+                                        {% for error in form.start_date.errors %}
+                                            <p class="text-red-400 text-xs italic mt-1">{{ error }}</p>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <div class="flex-1 mt-4 sm:mt-0">
+                                    <label for="{{ form.end_date.id_for_label }}" class="block text-base font-medium text-white mb-1">{{ form.end_date.label }} <span class="text-[var(--gold-yellow-main)]">*</span></label>
+                                    {{ form.end_date }}
+                                    {% if form.end_date.errors %}
+                                        {% for error in form.end_date.errors %}
+                                            <p class="text-red-400 text-xs italic mt-1">{{ error }}</p>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <div class="mt-4 flex items-center gap-2">
+                                    <input type="checkbox" id="{{ form.set_individual_budget.id_for_label }}" name="{{ form.set_individual_budget.name }}" {% if form.set_individual_budget.value %}checked{% endif %} class="django-checkbox-style" />
+                                    <label for="{{ form.set_individual_budget.id_for_label }}" class="text-white text-base font-medium cursor-pointer">{{ form.set_individual_budget.label }}</label>
+                                </div>
+                                <div id="individual-budget-field" class="mt-4 hidden">
+                                    <label for="{{ form.individual_budget.id_for_label }}" class="block text-base font-medium text-white mb-1">{{ form.individual_budget.label }} <span class="text-[var(--text-muted)] text-sm">(optional)</span></label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">₹</span>
+                                        {{ form.individual_budget }}
+                                        {% if form.individual_budget.errors %}
+                                            {% for error in form.individual_budget.errors %}
+                                                <p class="text-red-400 text-xs italic mt-1">{{ error }}</p>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# Home specific fields #}
+                        <div id="home-budget-field" class="space-y-4 hidden">
+                            <h4 class="text-xl font-semibold text-white mb-4 pt-2 border-t border-[var(--royal-blue-dark)]">Home Budget Details</h4>
+                            <div class="mt-4">
+                                <label for="{{ form.monthly_home_budget.id_for_label }}" class="block text-base font-medium text-white mb-1">{{ form.monthly_home_budget.label }}</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">₹</span>
+                                    {{ form.monthly_home_budget }}
+                                    {% if form.monthly_home_budget.errors %}
+                                        {% for error in form.monthly_home_budget.errors %}
+                                            <p class="text-red-400 text-xs italic mt-1">{{ error }}</p>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <p class="mt-1 text-sm text-[var(--text-muted)]">This is your monthly budget for the home group.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button class="w-full rounded-lg bg-[var(--gold-yellow-main)] px-6 py-3 text-lg font-bold text-[var(--background-deep-navy)] transition-transform hover:scale-105 hover:bg-[var(--gold-yellow-highlight)] focus:outline-none focus:ring-4 focus:ring-[var(--gold-yellow-main)] focus:ring-opacity-50" type="submit"> Create Group </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Image preview logic
+    const imageInput = document.getElementById('id_image');
+    const previewImage = document.getElementById('preview-image');
+    const uploadIcon = document.querySelector('#image-preview-container svg');
+
+    if (previewImage.src && previewImage.src !== window.location.href && previewImage.src !== '') {
+        previewImage.classList.remove('hidden');
+        if (uploadIcon) uploadIcon.classList.add('hidden');
+    } else {
+        previewImage.src = '';
+        previewImage.classList.add('hidden');
+        if (uploadIcon) uploadIcon.classList.remove('hidden');
+    }
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.classList.remove('hidden');
+                    if (uploadIcon) uploadIcon.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImage.src = '';
+                previewImage.classList.add('hidden');
+                if (uploadIcon) uploadIcon.classList.remove('hidden');
+            }
+        });
+    } else {
+        console.warn("Image input element (id_image) not found for group image upload.");
+    }
+
+    // Apply specific padding-left to budget input for currency symbol
+    const budgetInputs = document.querySelectorAll('input[type="number"][id^="id_"][id$="_budget"], input[type="number"][id^="id_monthly_home_budget"]');
+    budgetInputs.forEach(input => {
+        input.style.paddingLeft = '2.5rem';
+    });
+
+
+    // Group Type and Conditional Fields Logic
+    const groupTypeRadios = document.querySelectorAll('input[name="group_type"]');
+    const generalBudgetField = document.getElementById('general-budget-field');
+    const tripFields = document.getElementById('trip-fields');
+    const homeBudgetField = document.getElementById('home-budget-field');
+
+    const startDateInput = document.getElementById('id_start_date');
+    const endDateInput = document.getElementById('id_end_date');
+    const setIndividualBudgetCheckbox = document.getElementById('id_set_individual_budget');
+    const individualBudgetInput = document.getElementById('id_individual_budget');
+    const individualBudgetFieldContainer = document.getElementById('individual-budget-field');
+    
+    const monthlyHomeBudgetInput = document.getElementById('id_monthly_home_budget');
+    const mainBudgetInput = document.getElementById('id_budget');
+
+    function toggleConditionalFields() {
+        const selectedType = document.querySelector('input[name="group_type"]:checked')?.value;
+
+        // Manually manage 'is-selected' class based on checked state
+        groupTypeRadios.forEach(radio => {
+            const label = document.querySelector(`label[for="${radio.id}"]`);
+            if (label) {
+                if (radio.checked) {
+                    label.classList.add('is-selected');
+                } else {
+                    label.classList.remove('is-selected');
+                }
+            }
+        });
+
+
+        // Hide all conditional fields first
+        generalBudgetField.classList.add('hidden');
+        tripFields.classList.add('hidden');
+        homeBudgetField.classList.add('hidden');
+        individualBudgetFieldContainer.classList.add('hidden');
+
+        // Reset required attributes and clear values for all conditional fields
+        if (startDateInput) startDateInput.required = false;
+        if (endDateInput) endDateInput.required = false;
+        if (setIndividualBudgetCheckbox) setIndividualBudgetCheckbox.checked = false;
+        if (individualBudgetInput) individualBudgetInput.required = false;
+
+        if (mainBudgetInput) mainBudgetInput.value = '';
+        if (startDateInput) startDateInput.value = '';
+        if (endDateInput) endDateInput.value = '';
+        if (individualBudgetInput) individualBudgetInput.value = '';
+        if (monthlyHomeBudgetInput) monthlyHomeBudgetInput.value = '';
+
+
+        // Show relevant fields based on selected type
+        if (selectedType === 'Trip') {
+            generalBudgetField.classList.remove('hidden');
+            tripFields.classList.remove('hidden');
+            if (startDateInput) startDateInput.required = true;
+            if (endDateInput) endDateInput.required = true;
+            
+            // Re-check individual budget visibility if checkbox was already checked on load/edit
+            if (setIndividualBudgetCheckbox && setIndividualBudgetCheckbox.checked) {
+                individualBudgetFieldContainer.classList.remove('hidden');
+                if (individualBudgetInput) individualBudgetInput.required = true;
+            }
+        } else if (selectedType === 'Home') {
+            homeBudgetField.classList.remove('hidden');
+        } else if (selectedType === 'Others') {
+            generalBudgetField.classList.remove('hidden');
+        }
+    }
+
+    // Event listeners for group type radio buttons
+    groupTypeRadios.forEach(radio => {
+        radio.addEventListener('change', toggleConditionalFields);
+    });
+
+    // Individual budget toggle logic (for the checkbox within Trip fields)
+    if (setIndividualBudgetCheckbox && individualBudgetFieldContainer && individualBudgetInput) {
+        setIndividualBudgetCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                individualBudgetFieldContainer.classList.remove('hidden');
+                individualBudgetInput.required = true;
+            } else {
+                individualBudgetFieldContainer.classList.add('hidden');
+                individualBudgetInput.required = false;
+                individualBudgetInput.value = '';
+            }
+        });
+    }
+
+    // Date validation: End Date cannot be before Start Date
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', function() {
+            endDateInput.min = this.value;
+            if (endDateInput.value && endDateInput.value < this.value) {
+                endDateInput.value = this.value;
+            }
+        });
+        if (startDateInput.value) {
+             endDateInput.min = startDateInput.value;
+        }
+    }
+
+    // Initial call to set correct field visibility on page load (important for edit view)
+    toggleConditionalFields();
+
+    // Re-evaluate individual budget field visibility on load for 'Edit' view scenarios
+    // This ensures that if the checkbox was checked and the field had a value from the backend, it displays correctly.
+    // This needs to be outside toggleConditionalFields or called after, specifically for the edit case.
+    if (document.querySelector('input[name="group_type"]:checked')?.value === 'Trip' &&
+        setIndividualBudgetCheckbox && setIndividualBudgetCheckbox.checked) {
+        individualBudgetFieldContainer.classList.remove('hidden');
+        if (individualBudgetInput) individualBudgetInput.required = true;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Expense - PayJoint{% endblock %}
+
+{% block extra_head %}
+    <style type="text/css"> {# Changed type to text/css as we are using raw CSS #}
+        :root {
+            --background-deep-navy: #000814;
+            --accent-royal-blue: #001d3d;
+            --accent-royal-blue-darker: #003566;
+            --highlight-gold-yellow: #ffc300;
+            --highlight-gold-yellow-darker: #ffd60a;
+            --text-primary: #ffffff;
+            --text-secondary: #adb5bd;
+            --error-red: #ef4444;
+        }
+        body {
+            background-color: var(--background-deep-navy);
+            font-family: 'Roboto', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        /* General input styling for consistency (manually expanded @apply) */
+        .form-input-style {
+            width: 100%;
+            padding-left: 1rem; /* px-4 */
+            padding-right: 1rem; /* px-4 */
+            padding-top: 0.75rem; /* py-3 */
+            padding-bottom: 0.75rem; /* py-3 */
+            background-color: var(--accent-royal-blue);
+            border-width: 1px;
+            border-color: var(--accent-royal-blue-darker);
+            border-radius: 0.5rem; /* rounded-lg */
+            color: var(--text-primary); /* text-white */
+            opacity: 1; /* placeholder-gray-400 equivalent */
+            transition-property: box-shadow, border-color;
+            transition-duration: 300ms;
+            outline: 2px solid transparent; /* focus:outline-none */
+            outline-offset: 2px;
+        }
+        .form-input-style:focus {
+            box-shadow: 0 0 0 2px var(--highlight-gold-yellow); /* focus:ring-2 focus:ring-[var(--highlight-gold-yellow)] */
+            border-color: var(--highlight-gold-yellow); /* focus:border-[var(--highlight-gold-yellow)] */
+        }
+        .form-input-style::placeholder { /* For placeholders */
+            color: rgb(156 163 175 / var(--tw-placeholder-opacity)); /* gray-400 */
+            --tw-placeholder-opacity: 1;
+        }
+
+
+        /* Specific style for select dropdowns to match inputs (manually expanded @apply) */
+        .form-select-style {
+            width: 100%;
+            padding-left: 1rem; /* px-4 */
+            padding-right: 1rem; /* px-4 */
+            padding-top: 0.75rem; /* py-3 */
+            padding-bottom: 0.75rem; /* py-3 */
+            background-color: var(--accent-royal-blue);
+            border-width: 1px;
+            border-color: var(--accent-royal-blue-darker);
+            border-radius: 0.5rem; /* rounded-lg */
+            color: var(--text-primary); /* text-white */
+            opacity: 1; /* placeholder-gray-400 equivalent */
+            transition-property: box-shadow, border-color;
+            transition-duration: 300ms;
+            outline: 2px solid transparent; /* focus:outline-none */
+            outline-offset: 2px;
+            -webkit-appearance: none; /* appearance-none */
+            -moz-appearance: none;
+            appearance: none;
+            background-repeat: no-repeat;
+            background-position: right 1rem center; /* bg-right-4 */
+        }
+        .form-select-style:focus {
+            box-shadow: 0 0 0 2px var(--highlight-gold-yellow);
+            border-color: var(--highlight-gold-yellow);
+        }
+        .form-select-style::placeholder {
+            color: rgb(156 163 175 / var(--tw-placeholder-opacity));
+            --tw-placeholder-opacity: 1;
+        }
+
+        /* Styles for split method toggle buttons (manually expanded @apply) */
+        .split-method-btn {
+            flex: 1 1 0%; /* flex-1 */
+            padding-top: 0.5rem; /* py-2 */
+            padding-bottom: 0.5rem; /* py-2 */
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem;
+            font-weight: 500; /* font-medium */
+            border-radius: 0.375rem; /* rounded-md */
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
+            transition-duration: 150ms; /* duration-150 */
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .split-method-btn.active {
+            background-color: var(--highlight-gold-yellow);
+            color: #000; /* text-black */
+        }
+        .split-method-btn:not(.active) {
+            color: var(--text-secondary);
+        }
+        .split-method-btn:not(.active):hover {
+            background-color: var(--accent-royal-blue-darker);
+        }
+
+
+        /* Styles for participant checkboxes in Equally section (manually expanded @apply) */
+        .participant-checkbox-card {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem; /* p-3 */
+            background-color: var(--accent-royal-blue-dark);
+            border-radius: 0.5rem; /* rounded-lg */
+            cursor: pointer;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
+            transition-duration: 200ms; /* duration-200 */
+        }
+        .participant-checkbox-card:hover {
+            background-color: var(--accent-royal-blue-medium);
+        }
+        .participant-checkbox-card input[type="checkbox"] {
+            height: 1.25rem; /* h-5 */
+            width: 1.25rem; /* w-5 */
+            border-radius: 0.25rem; /* rounded */
+            border-width: 1px;
+            border-color: var(--accent-royal-blue-darker);
+            background-color: var(--accent-royal-blue);
+            color: var(--highlight-gold-yellow);
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            margin-right: 0.75rem; /* mr-3 */
+        }
+        .participant-checkbox-card input[type="checkbox"]:focus {
+            box-shadow: 0 0 0 2px var(--highlight-gold-yellow);
+        }
+
+        /* Percentage input specific style (manually expanded @apply) */
+        .percentage-input-style {
+            width: 100%;
+            height: 2rem; /* h-8 */
+            padding-left: 0.5rem; /* px-2 */
+            padding-right: 0.5rem; /* px-2 */
+            background-color: var(--accent-royal-blue-darker);
+            border-width: 1px;
+            border-color: var(--accent-royal-blue-darker);
+            border-radius: 0.375rem; /* rounded-md */
+            text-align: center;
+            transition-property: box-shadow, border-color;
+            transition-duration: 300ms;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+        .percentage-input-style:focus {
+            box-shadow: 0 0 0 2px var(--highlight-gold-yellow);
+            border-color: var(--highlight-gold-yellow);
+        }
+
+        /* Miscellaneous (from other files, manually expanded) */
+        .btn-primary {
+            background-color: var(--highlight-gold-yellow);
+            color: var(--background-deep-navy);
+            font-weight: 700; /* font-bold */
+            padding-top: 0.5rem; /* py-2 */
+            padding-bottom: 0.5rem; /* py-2 */
+            padding-left: 1rem; /* px-4 */
+            padding-right: 1rem; /* px-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
+            transition-duration: 300ms; /* duration-300 */
+        }
+        .btn-primary:hover {
+            background-color: var(--highlight-gold-yellow-darker);
+        }
+        .sort-btn {
+            background-color: var(--accent-royal-blue-medium);
+            color: var(--text-primary); /* text-white */
+            padding-left: 1rem; /* px-4 */
+            padding-right: 1rem; /* px-4 */
+            padding-top: 0.5rem; /* py-2 */
+            padding-bottom: 0.5rem; /* py-2 */
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem;
+            font-weight: 500; /* font-medium */
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
+            transition-duration: 200ms; /* duration-200 */
+            display: flex;
+            align-items: center;
+            space-x: 0.5rem; /* space-x-2 */
+        }
+        .sort-btn:hover {
+            background-color: var(--accent-royal-blue-dark);
+        }
+    </style>
+{% endblock %}
+
+{% block optional_header_content %}
+{# No optional header content (nav/auth buttons) for modals #}
+{% endblock optional_header_content %}
+
+{% block content %}
+<div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4">
+    <div class="bg-[var(--background-deep-navy)] rounded-2xl shadow-2xl w-full max-w-lg mx-auto border border-[var(--accent-royal-blue-darker)] max-h-[90vh] overflow-y-auto">
+        <div class="p-8">
+            {# Modal Header #}
+            <div class="flex items-center justify-between mb-6">
+                {# Back button #}
+                <a href="{% url 'groups:group_detail' group.id %}" class="inline-flex items-center text-[var(--highlight-gold-yellow)] hover:text-[var(--highlight-gold-yellow-darker)]">
+                    <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="ml-1 text-lg font-medium">Back</span>
+                </a>
+                <h2 class="text-3xl font-bold text-center flex-grow text-white">Add an Expense</h2>
+                <div></div> {# Empty div for spacing #}
+            </div>
+
+            <form method="post" id="expense-form" class="space-y-6">
+                {% csrf_token %}
+
+                {# Messages from Django views #}
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                            <div class="p-3 rounded-md mb-2 text-sm
+                                {% if 'success' in message.tags %}bg-green-100 text-green-700{% elif 'error' in message.tags %}bg-red-100 text-red-700{% elif 'info' in message.tags %}bg-blue-100 text-blue-700{% elif 'warning' in message.tags %}bg-yellow-100 text-yellow-700{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {# Expense Details Section #}
+                <div class="bg-[var(--accent-royal-blue-dark)] p-6 rounded-lg space-y-4">
+                    <h3 class="text-xl font-bold text-white mb-4">Expense Details</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="{{ form.description.id_for_label }}">Expense Title</label>
+                        {{ form.description }}
+                        {% for error in form.description.errors %}<p class="text-[var(--error-red)] text-xs mt-1">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="{{ form.amount.id_for_label }}">Amount</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-lg text-[var(--text-secondary)]">₹</span>
+                            {{ form.amount }}
+                            {% for error in form.amount.errors %}<p class="text-[var(--error-red)] text-xs mt-1">{{ error }}</p>{% endfor %}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="{{ form.paid_by.id_for_label }}">Paid By</label>
+                        {{ form.paid_by }}
+                        {% for error in form.paid_by.errors %}<p class="text-[var(--error-red)] text-xs mt-1">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+
+                {# Split Method Section #}
+                <div class="bg-[var(--accent-royal-blue-dark)] p-6 rounded-lg space-y-4">
+                    <h3 class="text-xl font-bold text-white mb-4">Split Method</h3>
+                    <div class="flex items-center space-x-2 rounded-lg bg-[var(--accent-royal-blue)] border border-[var(--accent-royal-blue-darker)] p-1">
+                        <button id="equally-btn" class="split-method-btn active" type="button">Equally</button>
+                        <button id="percent-btn" class="split-method-btn" type="button">By Percentage</button>
+                    </div>
+
+                    {# Equally Split Section (The default, only functional split) #}
+                    <div id="equally-section">
+                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Split Between</label>
+                        <div class="bg-[var(--accent-royal-blue)] border border-[var(--accent-royal-blue-darker)] rounded-lg p-4 space-y-3">
+                            {# Apply participant-checkbox-card class to the select-all label #}
+                            <label class="participant-checkbox-card mb-3" for="select-all">
+                                <input checked class="participant-checkbox-style" id="select-all" type="checkbox"/>
+                                <span class="ml-3 text-base font-medium text-white">Select All</span>
+                            </label>
+                            <div class="grid grid-cols-2 gap-3" id="equal-split-members">
+                                {# Corrected way to render and style individual checkboxes from Django form #}
+                                {% for checkbox in form.participants %}
+                                    <label class="participant-checkbox-card" for="{{ checkbox.id_for_label }}">
+                                        {{ checkbox.tag }} {# Renders the <input type="checkbox"> with its value, name, id, and initial checked status #}
+                                        <span class="participant-label-style">{{ checkbox.choice_label }}</span> {# Renders the member's name #}
+                                    </label>
+                                {% endfor %}
+                                {% for error in form.participants.errors %}<p class="text-[var(--error-red)] text-xs mt-1">{{ error }}</p>{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Percentage Split Section (UI only, with alert for non-implementation) #}
+                    <div id="percent-section" style="display:none;">
+                        <div class="bg-[var(--accent-royal-blue)] border border-[var(--accent-royal-blue-darker)] rounded-lg p-4 text-center">
+                            <p class="text-white text-md">Percentage split is not yet implemented.</p>
+                            <p class="text-[var(--text-secondary)] text-sm">Please use "Equally" for now.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="text-[var(--error-red)] text-sm mb-4">
+                        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                    </div>
+                {% endif %}
+
+                {# Action Buttons #}
+                <div class="flex justify-end space-x-4 pt-4">
+                    <a href="{% url 'groups:group_detail' group.id %}" class="px-6 py-2 rounded-lg bg-gray-600 text-white font-bold hover:bg-gray-700 transition-colors duration-300">Cancel</a>
+                    <button type="submit" class="px-6 py-2 rounded-lg bg-[var(--highlight-gold-yellow)] hover:bg-[var(--highlight-gold-yellow-darker)] text-black font-bold transition-colors duration-300">
+                        Add Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const equallyBtn = document.getElementById('equally-btn');
+    const percentBtn = document.getElementById('percent-btn');
+    const equallySection = document.getElementById('equally-section');
+    const percentSection = document.getElementById('percent-section');
+    const selectAllCheckbox = document.getElementById('select-all');
+    const memberCheckboxes = document.querySelectorAll('#equal-split-members input[type="checkbox"]');
+
+    // Apply common input styling to Django rendered fields
+    const descriptionInput = document.getElementById('{{ form.description.id_for_label }}');
+    if (descriptionInput) {
+        descriptionInput.classList.add('form-input-style');
+    }
+    const amountInput = document.getElementById('{{ form.amount.id_for_label }}');
+    if (amountInput) {
+        amountInput.classList.add('form-input-style');
+        // Ensure amount input uses type="number" with correct attributes
+        amountInput.setAttribute('type', 'number');
+        amountInput.setAttribute('min', '0');
+        amountInput.setAttribute('step', '0.01');
+    }
+    const paidBySelect = document.getElementById('{{ form.paid_by.id_for_label }}');
+    if (paidBySelect) {
+        paidBySelect.classList.add('form-select-style');
+    }
+
+    // Apply custom style to individual participant checkboxes
+    memberCheckboxes.forEach(checkbox => {
+        checkbox.classList.add('participant-checkbox-style');
+    });
+
+    // Toggle split method sections and button active states
+    equallyBtn.addEventListener('click', function() {
+        equallyBtn.classList.add('active');
+        percentBtn.classList.remove('active');
+        equallySection.style.display = 'block';
+        percentSection.style.display = 'none';
+
+        // When switching to Equally, ensure all are selected
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = true;
+            memberCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+    });
+
+    percentBtn.addEventListener('click', function() {
+        percentBtn.classList.add('active');
+        equallyBtn.classList.remove('active');
+        equallySection.style.display = 'none';
+        percentSection.style.display = 'block';
+        alert('Percentage split is not yet implemented. Please use "Equally" for now.'); // Inform user
+    });
+
+    // Select All checkbox logic for equally split
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            memberCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+
+    // Individual member checkbox logic
+    memberCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (!this.checked && selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            } else if (selectAllCheckbox) {
+                const allChecked = Array.from(memberCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+            }
+        });
+    });
+
+    // Initial state setup: Ensure "Equally" is active on load
+    equallyBtn.click(); // Simulate a click to activate "Equally" section on load
+});
+</script>
+{% endblock %}!

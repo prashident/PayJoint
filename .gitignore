@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*~
+
+# Virtual environment
+/myenv/
+
+# Database
+/db.sqlite3
+/db.sqlite3-journal
+*.sqlite3
+
+# Media files (user uploads)
+/media/
+
+# Static files (production output)
+/static/
+
+# Django-specific ignore patterns
+*.log
+.env
+.DS_Store
+
+# Sensitive information (security keys, etc.)
+# The SECRET_KEY and any other keys should be loaded from environment variables,
+# but as a final safety net, we also ignore the settings file if you have a local version.
+payjoint/settings.py

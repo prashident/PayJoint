@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PayJoint - Effortless Bill Splitting</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --midnight-navy: #000814;
+            --dark-blue: #001d3d;
+            --royal-blue: #003566;
+            --gold: #ffc300;
+            --bright-yellow: #ffd60a;
+            --white: #ffffff;
+            --light-gray: #f8f9fc;
+            --text-dark: #0e111b;
+            --text-light: #e0e0e0;
+        }
+        body {
+            font-family: "Roboto", sans-serif;
+        }
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: "Montserrat", sans-serif;
+        }
+        .bg-brand-gradient {
+            background: linear-gradient(45deg,
+                var(--midnight-navy) 0%,
+                var(--royal-blue) 100%);
+        }
+        .dynamic-bg {
+            background: linear-gradient(-45deg, var(--dark-blue), var(--royal-blue), var(--midnight-navy), var(--dark-blue));
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        .icon-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+        .wave-container {
+            position: relative;
+        }
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            line-height: 0;
+            transform: rotate(180deg);
+        }
+        .wave svg {
+            position: relative;
+            display: block;
+            width: calc(100% + 1.3px);
+            height: 80px;
+        }
+        .wave .shape-fill {
+            fill: var(--to-color);
+        }
+    </style>
+    <style>
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+</head>
+<body class="bg-[var(--midnight-navy)] text-[var(--text-light)]">
+<div class="relative flex min-h-screen flex-col overflow-x-hidden">
+<header class="sticky top-0 z-50 bg-[var(--midnight-navy)]/80 backdrop-blur-sm">
+<div class="container mx-auto flex items-center justify-between px-6 py-4">
+<div class="flex items-center gap-3">
+<svg class="h-8 w-8 text-[var(--gold)] transition-transform duration-500 hover:rotate-12" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z" fill="currentColor"></path>
+</svg>
+<h2 class="text-2xl font-bold text-[var(--white)]">PayJoint</h2>
+</div>
+<nav class="hidden items-center gap-8 md:flex">
+<a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="#">Home</a>
+<a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="#benefits">Benefits</a>
+<a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="#">Features</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="rounded-lg bg-[var(--dark-blue)] px-6 py-2 text-sm font-bold text-[var(--white)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]" onclick="window.location.href='{% url 'users:signup' %}'"> {# Changed to Django URL #}
+                        Sign up
+                    </button>
+<a href="{% url 'users:login' %}"> {# Changed to Django URL #}
+    <button class="rounded-lg bg-transparent px-6 py-2 text-sm font-bold text-[var(--white)] ring-1 ring-inset ring-[var(--royal-blue)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]">
+        Log in
+    </button>
+</a>
+</div>
+</div>
+</header>
+<main class="flex-grow">
+<section id="hero" class="relative dynamic-bg pb-32 pt-20 text-center text-white sm:pt-32">
+<div class="container relative z-10 mx-auto px-6">
+<h1 class="text-4xl font-black tracking-tight sm:text-6xl">
+                        Split bills effortlessly with friends
+                    </h1>
+<p class="mx-auto mt-6 max-w-2xl text-lg text-[var(--text-light)]">
+                        Simplify shared expenses with PayJoint. Track, split, and
+                        settle bills with ease, ensuring everyone pays their fair share.
+                    </p>
+<div class="mt-10 flex flex-wrap justify-center gap-4">
+<button class="rounded-lg bg-[var(--gold)] px-8 py-3 text-base font-bold text-[var(--midnight-navy)] transition-transform hover:scale-105 hover:bg-[var(--bright-yellow)]" onclick="window.location.href='{% url 'users:signup' %}'"> {# Changed to Django URL #}
+    Sign up for free
+</button>
+{% comment %} <button class="rounded-lg bg-transparent px-8 py-3 text-base font-bold text-[var(--white)] ring-1 ring-inset ring-[var(--white)] transition-transform hover:scale-105 hover:bg-[var(--white)] hover:text-[var(--midnight-navy)]">
+                            Learn More
+                        </button> {% endcomment %}
+</div>
+</div>
+<div class="wave wave-container" style="--to-color: var(--royal-blue);">
+<svg data-name="Layer 1" preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+<path class="shape-fill" d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.3-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity="0.25"></path>
+<path class="shape-fill" d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity="0.5"></path>
+<path class="shape-fill" d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,122.49,20.88,181.4,35.47,44.45,11.21,93.72,4.26,136.37-3.22,70.9-12.34,136.64-30.2,206.78-37.5C1138.64,9.06,1178.42,7.5,1200,12.79V0Z"></path>
+</svg>
+</div>
+</section>
+<section id="benefits" class="relative bg-[var(--royal-blue)] pb-32 pt-20 text-[var(--text-dark)] sm:pt-24">
+<div class="container mx-auto px-6">
+<div class="mx-auto max-w-2xl text-center">
+<h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                            Everything you need, nothing you don't.
+                        </h2>
+<p class="mt-4 text-lg text-gray-200">
+                            Explore the features that make PayJoint the best choice for
+                            managing shared expenses.
+                        </p>
+</div>
+<div class="mt-16 grid gap-8 md:grid-cols-3">
+<div class="rounded-xl bg-[var(--white)] p-8 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+<div class="icon-float inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--gold)] text-[var(--midnight-navy)]">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm40-68a28,28,0,0,1-28,28h-4v8a8,8,0,0,1-16,0v-8H104a8,8,0,0,1,0-16h36a12,12,0,0,0,0-24H116a28,28,0,0,1,0-56h4V72a8,8,0,0,1,16,0v8h16a8,8,0,0,1,0,16H116a12,12,0,0,0,0,24h24A28,28,0,0,1,168,148Z"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold">Easy Bill Splitting</h3>
+<p class="mt-2 text-gray-600">
+                                Quickly split bills among friends with just a few taps. Our
+                                intuitive interface makes it simple.
+                            </p>
+</div>
+<div class="rounded-xl bg-[var(--white)] p-8 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+<div class="icon-float inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--gold)] text-[var(--midnight-navy)]">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1-7.37-4.89,8,8,0,0,1,0-6.22A8,8,0,0,1,192,112a24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.68A8,8,0,0,1,244.8,150.4ZM190.92,212a8,8,0,1,1-13.84,8,57,57,0,0,0-98.16,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176ZM72,120a8,8,0,0,0-8-8A24,24,0,1,1,87.24,82a8,8,0,1,0,15.5-4A40,40,0,1,0,37,117.51,67.94,67.94,0,0,0,9.6,139.19a8,8,0,1,0,12.8,9.61A51.6,51.6,0,0,1,64,128,8,8,0,0,0,72,120Z"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold">Group Management</h3>
+<p class="mt-2 text-gray-600">
+                                Create and manage groups for friends or roommates. Easily
+                                add/remove members and track balances.
+                            </p>
+</div>
+<div class="rounded-xl bg-[var(--white)] p-8 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+<div class="icon-float inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--gold)] text-[var(--midnight-navy)]">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M208,40H48A16,16,0,0,0,32,56v58.78c0,89.61,75.82,119.34,91,124.39a15.53,15.53,0,0,0,10,0c15.2-5.05,91-34.78,91-124.39V56A16,16,0,0,0,208,40Zm0,74.79c0,78.42-66.35,104.62-80,109.18-13.53-4.51-80-30.69-80-109.18V56H208ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.68l50.34-50.34a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold">Secure Transactions</h3>
+<p class="mt-2 text-gray-600">
+                                Your financial information is protected at all times with
+                                our secure payment methods.
+                            </p>
+</div>
+</div>
+</div>
+<div class="wave wave-container" style="--to-color: var(--light-gray);">
+<svg data-name="Layer 1" preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+<path class="shape-fill" d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.3-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity="0.25"></path>
+<path class="shape-fill" d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity="0.5"></path>
+<path class="shape-fill" d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,122.49,20.88,181.4,35.47,44.45,11.21,93.72,4.26,136.37-3.22,70.9-12.34,136.64-30.2,206.78-37.5C1138.64,9.06,1178.42,7.5,1200,12.79V0Z"></path>
+</svg>
+</div>
+</section>
+<section class="relative bg-[var(--light-gray)] pb-32 pt-20 text-[var(--text-dark)] sm:pt-24">
+<div class="container mx-auto px-6">
+<div class="mx-auto max-w-2xl text-center">
+<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+                            Benefits that make a difference.
+                        </h2>
+<p class="mt-4 text-lg text-gray-600">
+                            Discover the advantages of using PayJoint for your shared
+                            expenses.
+                        </p>
+</div>
+<div class="mt-16 grid gap-8 md:grid-cols-3">
+<div class="group flex flex-col gap-4">
+<div class="aspect-h-2 aspect-w-3 w-full overflow-hidden rounded-lg">
+<img alt="Friends having fun" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmuN5KmMXS493Xkp9o5qXgwDW2V4nHeS7wQMWjOsVftLhPRPCixJ8M75fG0adSM81mgRpsE1A2Ig5oGZZB6rk58s-btHcILIAUtSTRAi0HVj9YBbt22GKkyz8j0OL1r2Fw8zrDig9jZn3qIHGXuyl7Xqc_uaKp9WnifJpsRRVSxnUHaekDrxUyuo6KUpyr7gBWcud0yhUt1Ro77V9TtBr6tnCRLQzhsj0UtMypS6PkyZi-sGimt6T1uIGGfHzOMRoVwWuOrDAnvp0n"/>
+</div>
+<h3 class="text-xl font-bold transition-colors group-hover:text-[var(--royal-blue)]">Fair and Transparent</h3>
+<p class="mt-2 text-gray-600">
+                                Ensure everyone pays their fair share with clear and
+                                accurate expense tracking. No more disputes.
+                            </p>
+</div>
+<div class="group flex flex-col gap-4">
+<div class="aspect-h-2 aspect-w-3 w-full overflow-hidden rounded-lg">
+<img alt="Person using a phone" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqFE_t5huuUtUavYuHz5Z6rE9SDB7tslFELFCxYDXyqHfhs9dNiNzU4qZkfy4T5dR64RPJNPKODb7fmyKj3ApexnWjVur6QmNIhIbCvOXBxE9n7cjE0gUzhxvsFZFJCpMnrrQQKuzwcF8jd5Aq1K4OcOqgTgHP8OCWQb8Omxiacjbzpzln9H-A4Dq9dZSepcZxar1HtpaQ0c1KDKZAT0FAAKYqAu1mo2F3BzdhSipqWtdp_9lbTk9ewdvzbO8Mxq3bXUjiqrGG65CQ"/>
+</div>
+<h3 class="text-xl font-bold transition-colors group-hover:text-[var(--royal-blue)]">Convenient and Efficient</h3>
+<p class="mt-2 text-gray-600">
+                                Manage shared expenses on the go. Split bills, track
+                                payments, and settle balances anytime, anywhere.
+                            </p>
+</div>
+<div class="group flex flex-col gap-4">
+<div class="aspect-h-2 aspect-w-3 w-full overflow-hidden rounded-lg">
+<img alt="People relaxing" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnYAaZHQKJtrxC9aTzw8Bems3lO6ip9R7dQ5kh0XqlzkjXwm2XpxDDdLREBINfu__mVjj9jOWt3YNgsYbhRyCWlV-FX98KJrSOusq51yOQemNbnkq0pb_93wsNU50Ht2eIgtN3tBxvnLCpkEKi2pIf6dM1uUbn_VrGY0nY5DFg10GyhDgb4hmYw5yM8MCSLK4JSH9L833k6iYlPMVMyENLoekk9mjcSCuZE20vw3w___cakEwKr6hkndUgifrWwkWYykJOuvd3QYxa"/>
+</div>
+<h3 class="mt-2 text-xl font-bold transition-colors group-hover:text-[var(--royal-blue)]">Peace of Mind</h3>
+<p class="mt-2 text-gray-600">
+                                Enjoy hassle-free bill splitting. Focus on enjoying time
+                                with friends, not on managing expenses.
+                            </p>
+</div>
+</div>
+</div>
+<div class="wave wave-container" style="--to-color: var(--midnight-navy);">
+<svg data-name="Layer 1" preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+<path class="shape-fill" d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.3-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity="0.25" style="transform: scaleX(-1);"></path>
+<path class="shape-fill" d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity="0.5" style="transform: scaleX(-1);"></path>
+<path class="shape-fill" d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,122.49,20.88,181.4,35.47,44.45,11.21,93.72,4.26,136.37-3.22,70.9-12.34,136.64-30.2,206.78-37.5C1138.64,9.06,1178.42,7.5,1200,12.79V0Z" style="transform: scaleX(-1);"></path>
+</svg>
+</div>
+</section>
+<section class="bg-brand-gradient py-20 text-white sm:py-24">
+<div class="container mx-auto px-6 text-center">
+<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+                        Ready to simplify your shared expenses?
+                    </h2>
+<p class="mx-auto mt-4 max-w-xl text-lg text-[var(--text-light)]">
+                        Sign up for PayJoint today and start splitting bills effortlessly with your
+                        friends. It's free to get started.
+                    </p>
+<div class="mt-8">
+<button id="get-started-btn" class="rounded-lg bg-[var(--gold)] px-8 py-3 text-base font-bold text-[var(--midnight-navy)] transition-transform hover:scale-105 hover:bg-[var(--bright-yellow)]" onclick="window.location.href='{% url 'users:signup' %}'">
+                            Get Started Now
+                        </button>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-[var(--midnight-navy)] text-[var(--text-light)]">
+<div class="container mx-auto px-6 py-12">
+<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
+<div class="flex flex-col items-center gap-4 text-center md:items-start md:text-left">
+<div class="flex items-center gap-3">
+<svg class="h-8 w-8 text-[var(--gold)]" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z" fill="currentColor"></path>
+</svg>
+<h2 class="text-2xl font-bold">PayJoint</h2>
+</div>
+<p class="text-sm text-gray-400">
+                            © 2024 PayJoint. All rights reserved.
+                        </p>
+</div>
+<div class="flex items-center gap-6">
+<a class="text-gray-400 transition-colors hover:text-[var(--bright-yellow)]" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M247.39,68.94A8,8,0,0,0,240,64H209.57A48.66,48.66,0,0,0,168.1,40a46.91,46.91,0,0,0-33.75,13.7A47.9,47.9,0,0,0,120,88v6.09C79.74,83.47,46.81,50.72,46.46,50.37a8,8,0,0,0-13.65,4.92c-4.31,47.79,9.57,79.77,22,98.18a110.93,110.93,0,0,0,21.88,24.2c-15.23,17.53-39.21,26.74-39.47,26.84a8,8,0,0,0-3.85,11.93c.75,1.12,3.75,5.05,11.08,8.72C53.51,229.7,65.48,232,80,232c70.67,0,129.72-54.42,135.75-124.44l29.91-29.9A8,8,0,0,0,247.39,68.94Zm-45,29.41a8,8,0,0,0-2.32,5.14C196,166.58,143.28,216,80,216c-10.56,0-18-1.4-23.22-3.08,11.51-6.25,27.56-17,37.88-32.48A8,8,0,0,0,92,169.08c-.47-.27-43.91-26.34-44-96,16,13,45.25,33.17,78.67,38.79A8,8,0,0,0,136,104V88a32,32,0,0,1,9.6-22.92A30.94,30.94,0,0,1,167.9,56c12.66.16,24.49,7.88,29.44,19.21A8,8,0,0,0,204.67,80h16Z"></path>
+</svg>
+</a>
+<a class="text-gray-400 transition-colors hover:text-[var(--bright-yellow)]" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160ZM176,24H80A56.06,56.06,0,0,0,24,80v96a56.06,56.06,0,0,0,56,56h96a56.06,56.06,0,0,0,56-56V80A56.06,56.06,0,0,0,176,24Zm40,152a40,40,0,0,1-40,40H80a40,40,0,0,1-40-40V80A40,40,0,0,1,80,40h96a40,40,0,0,1,40,40ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"></path>
+</svg>
+</a>
+<a class="text-gray-400 transition-colors hover:text-[var(--bright-yellow)]" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V152h24a8,8,0,0,0,0-16H136V112a16,16,0,0,1,16-16h16a8,8,0,0,0,0-16H152a32,32,0,0,0-32,32v24H96a8,8,0,0,0,0,16h24v63.63a88,88,0,1,1,16,0Z"></path>
+</svg>
+</a>
+</div>
+<nav class="flex flex-wrap justify-center gap-x-6 gap-y-2">
+<a class="text-sm text-gray-400 transition-colors hover:text-[var(--royal-blue)]" href="#">Terms</a>
+<a class="text-sm text-gray-400 transition-colors hover:text-[var(--royal-blue)]" href="#">Privacy</a>
+<a class="text-sm text-gray-400 transition-colors hover:text-[var(--royal-blue)]" href="#">Contact</a>
+</nav>
+</div>
+</div>
+</footer>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('get-started-btn');
+  var hero = document.getElementById('hero');
+  if (btn && hero) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+});
+</script>
+</body></html>

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Share Group Code - PayJoint{% endblock %}
+
+{% block extra_head %}
+    <style type="text/tailwindcss">
+      :root {
+        --background-deep-navy: #000814;
+        --royal-blue-dark: #001d3d;
+        --royal-blue-medium: #003566;
+        --gold-yellow-main: #ffc300;
+        --gold-yellow-highlight: #ffd60a;
+        --text-light: #ffffff;
+        --text-muted: #adb5bd;
+      }
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: var(--background-deep-navy);
+        color: var(--text-light);
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: 'Montserrat', sans-serif;
+      }
+    </style>
+{% endblock %}
+
+{% block optional_header_content %}
+{# No optional header content (nav/auth buttons) on this page, only the default logo from base.html #}
+{% endblock optional_header_content %}
+
+{% block content %}
+<div class="flex min-h-screen flex-col bg-[var(--background-deep-navy)]">
+<main class="flex flex-1 items-center justify-center py-12 sm:py-16">
+<div class="w-full max-w-lg space-y-8 rounded-2xl bg-[var(--royal-blue-dark)] p-8 shadow-2xl">
+<div class="text-center">
+<h2 class="mt-4 text-3xl font-bold text-white">Share Group Code</h2>
+<p class="mt-2 text-base text-[var(--text-muted)]">Give this code to your friends to join "{{ group.name }}".</p>
+</div>
+<div class="space-y-6">
+<div>
+<label class="text-sm font-medium text-[var(--text-muted)]" for="group-code-display">Group Code</label>
+<div class="relative mt-2 flex items-center">
+    <input class="w-full rounded-lg border-2 border-[var(--royal-blue-medium)] bg-[var(--royal-blue-medium)] px-4 py-3 text-white font-bold text-center text-xl cursor-text focus:border-[var(--gold-yellow-highlight)] focus:outline-none focus:ring-0"
+           id="group-code-display" readonly="" type="text" value="{{ group.id }}"/>
+</div>
+</div>
+<div class="flex flex-col space-y-4 pt-2">
+    <button id="copy-group-code-btn" class="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--gold-yellow-main)] px-4 py-3 text-base font-bold text-[var(--background-deep-navy)] transition-transform hover:scale-105 hover:bg-[var(--gold-yellow-highlight)] focus:outline-none focus:ring-4 focus:ring-[var(--gold-yellow-highlight)] focus:ring-opacity-50" type="button">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        <span>Copy Code</span>
+    </button>
+</div>
+<div class="pt-4">
+<a href="{% url 'groups:group_detail' group.id %}"> {# Link back to the group detail page #}
+<button class="w-full rounded-lg bg-transparent px-4 py-3 text-base font-bold text-[var(--gold-yellow-main)] ring-2 ring-inset ring-[var(--gold-yellow-main)] transition-transform hover:scale-105 hover:bg-[var(--gold-yellow-main)] hover:text-[var(--background-deep-navy)] focus:outline-none focus:ring-4 focus:ring-[var(--gold-yellow-highlight)] focus:ring-opacity-50">
+                Go to Group
+              </button>
+</a>
+</div>
+</div>
+</div>
+</main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const copyButton = document.getElementById('copy-group-code-btn');
+    const groupCodeInput = document.getElementById('group-code-display');
+
+    if (copyButton && groupCodeInput) {
+        copyButton.addEventListener('click', function() {
+            groupCodeInput.select(); // Select the text in the input field
+            groupCodeInput.setSelectionRange(0, 99999); // For mobile devices
+
+            navigator.clipboard.writeText(groupCodeInput.value)
+                .then(function() {
+                    alert('Group code copied to clipboard!');
+                    // Optionally, change button text temporarily to "Copied!"
+                    const originalText = copyButton.innerHTML;
+                    copyButton.innerHTML = '<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg> Copied!';
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalText;
+                    }, 1500);
+                })
+                .catch(function(err) {
+                    console.error('Failed to copy text: ', err);
+                    alert('Failed to copy group code. Please copy it manually.');
+                });
+        });
+    }
+});
+</script>
+{% endblock %}

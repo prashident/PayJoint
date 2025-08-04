@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - PayJoint{% endblock %}
+
+{% block extra_head %}
+    <style type="text/tailwindcss">
+        :root {
+            --background: #000814;
+            --primary-accent: #001d3d;
+            --secondary-accent: #003566;
+            --highlight: #ffc300;
+            --highlight-hover: #ffd60a;
+            --text-primary: #ffffff;
+            --text-secondary: #adb5bd;
+            --card-hover-shadow: rgba(255, 195, 0, 0.3); /* Softer highlight shadow */
+            --owed-color: #34D399; /* Green for positive balance (owed to you) */
+            --owing-color: #EF4444; /* Red for negative balance (you owe) */
+            --neutral-color: #ADB5BD; /* Gray for neutral balance */
+            --budget-low: #34D399; /* Green for < 50% */
+            --budget-medium: #FBBF24; /* Yellow for 50-90% */
+            --budget-high: #EF4444; /* Red for > 90% */
+        }
+        body {
+            background-color: var(--background);
+            font-family: 'Roboto', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        .group-card {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Initial subtle shadow */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .group-card:hover {
+            transform: translateY(-5px); /* Slightly more lift on hover */
+            box-shadow: 0 8px 20px var(--card-hover-shadow); /* Enhanced shadow on hover */
+        }
+        .notification-item:hover {
+            background-color: var(--highlight-hover); /* Use highlight-hover for consistency */
+            color: var(--background); /* Text color change on hover */
+        }
+        /* Style for the floating join group input popover */
+        #join-group-popover {
+            position: fixed;
+            bottom: 120px; /* Position above create group FAB */
+            right: 8px;
+            background-color: var(--primary-accent);
+            border: 1px solid var(--secondary-accent);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 50; /* Ensure it's above other content */
+            width: 280px; /* Adjust width as needed */
+        }
+    </style>
+{% endblock %}
+
+{% block optional_header_content %}
+{# Override this block to remove the nav and auth buttons from the header on the dashboard page #}
+{% endblock optional_header_content %}
+
+{% block content %}
+<div class="flex flex-col min-h-screen">
+    {# Main content area starts here #}
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
+            <h2 class="text-4xl font-bold text-[var(--text-primary)]">Hey {{ user.username }}, welcome back!</h2>
+            <div class="flex items-center gap-6">
+                {# Notification Bell and Popover #}
+                <div class="relative" id="notification-container">
+                    <button id="notification-bell" class="p-2 rounded-full hover:bg-[var(--primary-accent)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--background)] focus:ring-[var(--highlight)]">
+                        <svg class="w-6 h-6 text-[var(--text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </button>
+                    <span class="absolute -top-1 -right-1 flex h-5 w-5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-5 w-5 bg-red-500 justify-center items-center text-xs font-bold text-[var(--text-primary)]">3</span>{# Replace with dynamic notification count #}
+                    </span>
+                    <div id="notification-popover" class="hidden absolute right-0 mt-2 w-64 bg-[var(--background)] text-[var(--text-primary)] rounded-2xl shadow-lg z-50 border border-[var(--secondary-accent)]">
+                        <div class="p-4 border-b border-[var(--secondary-accent)] font-bold text-lg bg-[var(--primary-accent)] text-[var(--highlight)] rounded-t-2xl">Notifications</div>
+                        <ul class="divide-y divide-[var(--secondary-accent)]">
+                            {# Example notifications, replace with dynamic data #}
+                            <li class="p-4 notification-item transition-colors">Sarah paid you ₹120 for Dinner</li>
+                            <li class="p-4 notification-item transition-colors">Liam added a new expense: Movie Tickets</li>
+                            <li class="p-4 notification-item transition-colors">You settled up with Ethan</li>
+                        </ul>
+                        <div class="p-2 text-center text-sm text-[var(--text-secondary)] bg-[var(--primary-accent)] rounded-b-2xl">No more notifications</div>
+                    </div>
+                </div>
+                {# Profile Button #}
+                <a href="{% url 'users:profile_detail' %}" class="block w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--highlight)] flex-shrink-0">
+                    {# Replace with actual user profile picture. Placeholder for now. #}
+                    <img src="https://via.placeholder.com/40/003566/FFFFFF?text=P" alt="Profile" class="w-full h-full object-cover">
+                </a>
+            </div>
+        </div>
+
+        {# My Finances Section #}
+        <div class="bg-[var(--primary-accent)] rounded-2xl shadow-lg p-6 mb-8 border border-[var(--secondary-accent)]">
+            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-4">My Finances Overview</h3>
+            <div class="flex flex-col sm:flex-row justify-around items-center gap-6">
+                <div class="text-center">
+                    <p class="text-[var(--text-secondary)] text-sm">Total You Are Owed</p>
+                    <p class="text-4xl font-bold text-[var(--owed-color)] mt-2">₹{{ total_owed_to_user }}</p>
+                    <p class="text-[var(--text-secondary)] text-xs">(Across all groups)</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[var(--text-secondary)] text-sm">Total You Owe</p>
+                    <p class="text-4xl font-bold text-[var(--owing-color)] mt-2">₹{{ total_user_owes }}</p>
+                    <p class="text-[var(--text-secondary)] text-xs">(Across all groups)</p>
+                </div>
+            </div>
+            {# The note about placeholders is now removed as the data is live #}
+        </div>
+        {# End My Finances Section #}
+
+
+        <h3 class="text-3xl font-bold text-[var(--text-primary)] mb-6">My Groups</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% if groups_with_details %} {# Loop through the new context variable #}
+                {% for item in groups_with_details %}
+                {% with group=item.group %}
+                <a href="{% url 'groups:group_detail' group.id %}" class="block group">
+                    <div class="bg-[var(--primary-accent)] rounded-2xl overflow-hidden group-card">
+                        {# Conditional display for group image #}
+                        {% if group.image %}
+                            <img class="h-48 w-full object-cover" src="{{ group.image.url }}" alt="{{ group.name }} Image">
+                        {% else %}
+                            {# Default placeholder image #}
+                            <div class="h-48 w-full bg-cover bg-center flex items-center justify-center text-[var(--text-primary)] text-2xl font-semibold" style='background-color: var(--secondary-accent);'>
+                                No Image
+                            </div>
+                        {% endif %}
+                        <div class="p-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                {# Group Type Icon #}
+                                {% if group.group_type == 'Trip' %}
+                                    <svg class="w-5 h-5 text-[var(--highlight)]" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M19 6H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 9h-2v2h-2v-2h-2v2H9v-2H7v2H5V8h14v7zM12 9c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+                                    </svg>
+                                {% elif group.group_type == 'Home' %}
+                                    <svg class="w-5 h-5 text-[var(--highlight)]" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 5.69L17 10.19V18h-2v-6H9v6H7v-7.81L12 5.69zM12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
+                                    </svg>
+                                {% else %} {# Default for 'Others' #}
+                                    <svg class="w-5 h-5 text-[var(--highlight)]" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                                    </svg>
+                                {% endif %}
+                                <h3 class="text-xl font-bold text-[var(--text-primary)]">{{ group.name }}</h3>
+                            </div>
+                            <p class="text-[var(--text-secondary)] text-sm mb-4">{{ group.description|truncatechars:70 }}</p>
+
+                            {# Budget Usage Icon and Text #}
+                            {% if item.budget_limit is not None %} {# Changed from `if item.budget_limit` to explicitly check for None #}
+                                <div class="flex items-center gap-2 mb-4">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-[var(--background)]"
+                                         style="background-color:
+                                         {% if item.budget_percentage_spent <= 50 %}
+                                            var(--budget-low)
+                                         {% elif item.budget_percentage_spent > 50 and item.budget_percentage_spent <= 90 %}
+                                            var(--budget-medium)
+                                         {% else %} {# > 90% or over budget #}
+                                            var(--budget-high)
+                                         {% endif %};">
+                                        {# Ensure percentage is displayed as an integer #}
+                                        {{ item.budget_percentage_spent|floatformat:"0" }}%
+                                    </div>
+                                    <span class="text-sm text-[var(--text-secondary)]">
+                                        Budget Used: ₹{{ item.total_expenses_amount }} / ₹{{ item.budget_limit }}
+                                    </span>
+                                </div>
+                            {% else %}
+                                {# Optional: Show a message if no budget is set for the group #}
+                                <p class="text-sm text-[var(--text-secondary)] mb-4">No budget set for this group.</p>
+                            {% endif %}
+
+                            <div class="flex items-center justify-between">
+                                {# User's balance in THIS group #}
+                                {% if item.user_balance > 0 %}
+                                    <span class="font-bold text-[var(--owed-color)]">You are owed ₹{{ item.user_balance }}</span>
+                                {% elif item.user_balance < 0 %}
+                                    <span class="font-bold text-[var(--owing-color)]">You owe ₹{{ item.user_balance|floatformat:2|cut:"-" }}</span>
+                                {% else %}
+                                    <span class="font-bold text-[var(--neutral-color)]">Balances settled</span>
+                                {% endif %}
+
+                                {# Member Count Icon #}
+                                <span class="flex items-center gap-1 text-sm text-[var(--text-secondary)]">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                    {{ group.members.count }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endwith %}
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full bg-[var(--primary-accent)] rounded-2xl shadow-lg p-8 text-center border border-[var(--secondary-accent)]">
+                    <p class="text-[var(--text-secondary)] text-lg mb-4">You haven't joined or created any groups yet.</p>
+                    <p class="text-[var(--text-primary)] text-xl font-semibold">Start by creating your first group or join an existing one!</p>
+                    <div class="mt-6 flex justify-center gap-4">
+                        <a href="{% url 'groups:create_group' %}" class="bg-[var(--highlight)] hover:bg-[var(--highlight-hover)] text-[var(--background)] font-bold py-3 px-6 rounded-lg shadow-md transition-transform duration-300 transform hover:scale-105">
+                            Create New Group
+                        </a>
+                        {# Now the "Join with Code" is a floating button, but a hint here is still useful #}
+                        <button onclick="focusGroupCodeInput()" class="border border-[var(--highlight)] text-[var(--highlight)] hover:bg-[var(--highlight)] hover:text-[var(--background)] font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-300">
+                            Join with Code
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        {# Floating Action Button for Join Group #}
+        <div id="join-group-popover" class="hidden">
+            <form method="post" action="{% url 'groups:join_group_by_code' %}" class="flex flex-col gap-3">
+                {% csrf_token %}
+                <h4 class="text-lg font-bold text-[var(--text-primary)]">Join Group</h4>
+                <input type="text" name="group_code" placeholder="Enter group code (UUID)"
+                       class="w-full px-4 py-3 bg-[var(--background)] border border-[var(--secondary-accent)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight)] transition-shadow duration-300"
+                       required>
+                <button type="submit" class="bg-[var(--highlight)] hover:bg-[var(--highlight-hover)] text-[var(--background)] font-bold py-2 px-4 rounded-lg shadow-md transition-transform duration-300 transform hover:scale-105 w-full">
+                    Join
+                </button>
+                <button type="button" id="close-join-popover" class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] mt-1">Close</button>
+            </form>
+        </div>
+
+        <div class="fixed bottom-8 right-8 flex flex-col gap-4 z-40">
+            {# Join Group FAB (positioned above Create Group FAB) #}
+            <button id="join-group-fab" class="bg-[var(--secondary-accent)] hover:bg-[var(--royal-blue)] text-[var(--text-primary)] font-bold py-4 px-6 rounded-full shadow-lg flex items-center gap-2 transition-transform duration-300 transform hover:scale-105">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"></path></svg>
+                <span>Join Group</span>
+            </button>
+
+            {# Create Group FAB #}
+            <a href="{% url 'groups:create_group' %}">
+                <button class="bg-[var(--highlight)] hover:bg-[var(--highlight-hover)] text-[var(--background)] font-bold py-4 px-6 rounded-full shadow-lg flex items-center gap-2 transition-transform duration-300 transform hover:scale-105">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" fill-rule="evenodd"></path></svg>
+                    <span>Create Group</span>
+                </button>
+            </a>
+        </div>
+
+        {# Removed Pending Invitations Section as per previous discussion for simplicity #}
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    // Notification popover logic
+    const bell = document.getElementById('notification-bell');
+    const notificationPopover = document.getElementById('notification-popover');
+    document.addEventListener('click', function(e) {
+        if (bell && notificationPopover) {
+            if (bell.contains(e.target)) {
+                notificationPopover.classList.toggle('hidden');
+            } else if (!notificationPopover.contains(e.target) && !e.target.closest('#notification-popover')) {
+                notificationPopover.classList.add('hidden');
+            }
+        }
+    });
+
+    // Join Group Popover Logic
+    const joinGroupFab = document.getElementById('join-group-fab');
+    const joinGroupPopover = document.getElementById('join-group-popover');
+    const closeJoinPopoverBtn = document.getElementById('close-join-popover');
+
+    if (joinGroupFab && joinGroupPopover && closeJoinPopoverBtn) {
+        joinGroupFab.addEventListener('click', function() {
+            joinGroupPopover.classList.toggle('hidden');
+            // Optional: focus on the input field when popover opens
+            if (!joinGroupPopover.classList.contains('hidden')) {
+                joinGroupPopover.querySelector('input[name="group_code"]').focus();
+            }
+        });
+
+        closeJoinPopoverBtn.addEventListener('click', function() {
+            joinGroupPopover.classList.add('hidden');
+        });
+
+        // Close popover if clicked outside
+        document.addEventListener('click', function(e) {
+            // Check if the click is outside both the FAB and the popover itself
+            if (!joinGroupFab.contains(e.target) && !joinGroupPopover.contains(e.target)) {
+                joinGroupPopover.classList.add('hidden');
+            }
+        });
+    }
+
+    // Optional: Scroll to join group input when 'Join with Code' button is clicked in empty state
+    // This function will now trigger the FAB click to show the popover
+    function focusGroupCodeInput() {
+        const joinFab = document.getElementById('join-group-fab');
+        if (joinFab) {
+            joinFab.click(); // Simulate click on the FAB
+        }
+    }
+    </script>
+{% endblock %}

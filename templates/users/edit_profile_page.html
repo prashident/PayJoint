@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Profile - PayJoint{% endblock %}
+
+{% block extra_head %}
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    <style type="text/tailwindcss">
+        :root {
+            --background-deep-navy: #000814;
+            --royal-blue-dark: #001d3d;
+            --royal-blue-medium: #003566;
+            --gold-yellow-primary: #ffc300;
+            --gold-yellow-secondary: #ffd60a;
+        }
+        body {
+            background-color: var(--background-deep-navy);
+            font-family: 'Roboto', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        .form-input {
+            background-color: var(--royal-blue-medium);
+            border: 1px solid var(--royal-blue-dark);
+            color: white;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--gold-yellow-primary);
+            box-shadow: 0 0 0 2px var(--gold-yellow-primary);
+        }
+        .btn-primary {
+            background-color: var(--gold-yellow-primary);
+            color: var(--background-deep-navy);
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: var(--gold-yellow-secondary);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="relative flex size-full min-h-screen flex-col bg-[var(--background-deep-navy)]">
+    {# Header is in base.html #}
+    <main class="flex h-full grow flex-col items-center justify-center p-6 sm:p-8 md:p-12">
+        <div class="w-full max-w-md space-y-8">
+            <div class="relative">
+                <a class="absolute -top-4 left-0 text-[var(--gold-yellow-primary)] hover:text-[var(--gold-yellow-secondary)] transition-colors" href="{% url 'users:profile_detail' %}">
+                    <span class="material-icons text-4xl">arrow_back</span>
+                </a>
+                <h1 class="text-center text-4xl font-bold text-white">Edit Profile</h1>
+            </div>
+            <div class="space-y-6">
+                <div class="relative mx-auto h-32 w-32">
+                    <img alt="Profile Picture" class="h-full w-full rounded-full object-cover" src="https://placehold.co/128x128/003566/ffffff?text=User+Profile"/> {# Placeholder image #}
+                    <label class="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[var(--gold-yellow-primary)] text-[var(--background-deep-navy)] hover:bg-[var(--gold-yellow-secondary)]" for="profile-picture-upload">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
+                            <path clip-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" fill-rule="evenodd"></path>
+                        </svg>
+                        <input class="sr-only" id="profile-picture-upload" name="profile-picture-upload" type="file"/>
+                    </label>
+                </div>
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    {# Assuming you have an EditProfileForm in forms.py with 'name', 'email', 'phone' #}
+                    {# For now, we'll just show email as it's directly from Django User #}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300" for="id_email">Email address</label>
+                        <div class="mt-1">
+                            <input autocomplete="email" class="form-input block w-full rounded-md border-transparent px-4 py-3 text-base placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-[var(--gold-yellow-primary)] focus:ring-offset-2 focus:ring-offset-[var(--background-deep-navy)]" id="id_email" name="email" value="{{ user.email }}" readonly type="email"/>
+                        </div>
+                    </div>
+                    {# Other fields like Name and Phone would require extending Django's User model or a separate Profile model #}
+                    {# For simplicity now, they are commented out or left as static inputs #}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300" for="name">Name</label>
+                        <div class="mt-1">
+                            <input autocomplete="name" class="form-input block w-full rounded-md border-transparent px-4 py-3 text-base placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-[var(--gold-yellow-primary)] focus:ring-offset-2 focus:ring-offset-[var(--background-deep-navy)]" id="name" name="name" placeholder="Jane Doe" type="text" value="{% if user.first_name %}{{ user.first_name }}{% if user.last_name %} {{ user.last_name }}{% endif %}{% endif %}"/>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300" for="phone">Phone</label>
+                        <div class="mt-1">
+                            <input autocomplete="tel" class="form-input block w-full rounded-md border-transparent px-4 py-3 text-base placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-[var(--gold-yellow-primary)] focus:ring-offset-2 focus:ring-offset-[var(--background-deep-navy)]" id="phone" name="phone" placeholder="+1 (555) 123-4567" type="tel"/>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn-primary flex w-full justify-center rounded-md border border-transparent px-4 py-3 text-base font-bold shadow-sm" type="submit">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
