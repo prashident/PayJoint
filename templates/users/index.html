@@ -110,10 +110,10 @@
 <a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="#">Features</a>
 </nav>
 <div class="flex items-center gap-4">
-<button class="rounded-lg bg-[var(--dark-blue)] px-6 py-2 text-sm font-bold text-[var(--white)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]" onclick="window.location.href='{% url 'users:signup' %}'"> {# Changed to Django URL #}
+<button class="rounded-lg bg-[var(--dark-blue)] px-6 py-2 text-sm font-bold text-[var(--white)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]" onclick="window.location.href='{% url 'account_signup' %}'"> {# Changed to Django URL #}
                         Sign up
                     </button>
-<a href="{% url 'users:login' %}"> {# Changed to Django URL #}
+<a href="{% url 'account_login' %}"> {# Changed to Django URL #}
     <button class="rounded-lg bg-transparent px-6 py-2 text-sm font-bold text-[var(--white)] ring-1 ring-inset ring-[var(--royal-blue)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]">
         Log in
     </button>
@@ -132,7 +132,7 @@
                         settle bills with ease, ensuring everyone pays their fair share.
                     </p>
 <div class="mt-10 flex flex-wrap justify-center gap-4">
-<button class="rounded-lg bg-[var(--gold)] px-8 py-3 text-base font-bold text-[var(--midnight-navy)] transition-transform hover:scale-105 hover:bg-[var(--bright-yellow)]" onclick="window.location.href='{% url 'users:signup' %}'"> {# Changed to Django URL #}
+<button class="rounded-lg bg-[var(--gold)] px-8 py-3 text-base font-bold text-[var(--midnight-navy)] transition-transform hover:scale-105 hover:bg-[var(--bright-yellow)]" onclick="window.location.href='{% url 'account_signup' %}'"> {# Changed to Django URL #}
     Sign up for free
 </button>
 {% comment %} <button class="rounded-lg bg-transparent px-8 py-3 text-base font-bold text-[var(--white)] ring-1 ring-inset ring-[var(--white)] transition-transform hover:scale-105 hover:bg-[var(--white)] hover:text-[var(--midnight-navy)]">
@@ -268,7 +268,7 @@
                         friends. It's free to get started.
                     </p>
 <div class="mt-8">
-<button id="get-started-btn" class="rounded-lg bg-[var(--gold)] px-8 py-3 text-base font-bold text-[var(--midnight-navy)] transition-transform hover:scale-105 hover:bg-[var(--bright-yellow)]" onclick="window.location.href='{% url 'users:signup' %}'">
+<button id="get-started-btn" class="rounded-lg bg-[var(--gold)] px-8 py-3 text-base font-bold text-[var(--midnight-navy)] transition-transform hover:scale-105 hover:bg-[var(--bright-yellow)]" onclick="window.location.href='{% url 'account_signup' %}'">
                             Get Started Now
                         </button>
 </div>

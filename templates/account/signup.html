@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load socialaccount %}
+
+{% block title %}
+    Sign Up - PayJoint
+{% endblock %}
+
+{% block extra_head %}
+<style type="text/tailwindcss">
+    :root {
+        --bg-deep-navy: #000814;
+        --accent-royal-blue-dark: #001d3d;
+        --accent-royal-blue-medium: #003566;
+        --highlight-gold-yellow: #ffc300;
+        --highlight-gold-yellow-darker: #ffd60a;
+        --text-primary: #ffffff;
+        --text-secondary: #a9a9a9;
+    }
+    body {
+        background-color: var(--bg-deep-navy);
+        font-family: 'Roboto', sans-serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+    }
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(
+            from 0deg at 50% 50%,
+            var(--accent-royal-blue-dark) 0%,
+            var(--accent-royal-blue-medium) 30%,
+            var(--bg-deep-navy) 60%,
+            var(--bg-deep-navy) 100%
+        );
+        animation: rotate 10s linear infinite;
+    }
+    .page-background::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 2rem 2rem;
+        opacity: 0.5;
+    }
+    @keyframes rotate {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    .tab-button.active {
+        color: var(--highlight-gold-yellow);
+        border-bottom-color: var(--highlight-gold-yellow);
+    }
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
+    .auth-input-style {
+        @apply w-full px-4 py-3 bg-[var(--accent-royal-blue-dark)] border border-[var(--accent-royal-blue-medium)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--highlight-gold-yellow-darker)] transition-shadow duration-300;
+    }
+</style>
+{% endblock %}
+
+{% block optional_header_content %}
+<nav class="hidden items-center gap-8 md:flex">
+    <a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="{% url 'users:index' %}">Home</a>
+    <a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="{% url 'users:index' %}#benefits">Benefits</a>
+    <a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="{% url 'users:index' %}#features">Features</a>
+</nav>
+<div class="flex items-center gap-4">
+    {% if user.is_authenticated %}
+        <span class="text-sm font-medium text-[var(--text-light)]">Welcome, {{ user.email }}!</span>
+        <a href="{% url 'groups:dashboard' %}" class="rounded-lg bg-[var(--dark-blue)] px-6 py-2 text-sm font-bold text-[var(--white)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]">
+            Dashboard
+        </a>
+        <a href="{% url 'account_logout' %}" class="rounded-lg bg-transparent px-6 py-2 text-sm font-bold text-[var(--white)] ring-1 ring-inset ring-[var(--royal-blue)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]">
+            Log Out
+        </a>
+    {% else %}
+        <a href="{% url 'account_login' %}" class="rounded-lg bg-transparent px-6 py-2 text-sm font-bold text-[var(--white)] ring-1 ring-inset ring-[var(--royal-blue)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]">
+            Log in
+        </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="relative min-h-screen flex items-center justify-center p-4 overflow-hidden page-background">
+    <div class="login-container relative max-w-md w-full">
+        <div class="relative bg-[var(--bg-deep-navy)] rounded-2xl p-8 z-10">
+            <div class="text-center mb-8">
+                <div class="flex justify-center items-center mb-4">
+                    <div class="w-16 h-16 bg-[var(--accent-royal-blue-medium)] rounded-full flex items-center justify-center">
+                        <span class="text-2xl font-bold text-[var(--highlight-gold-yellow)]">PJ</span>
+                    </div>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Join PayJoint,</h1>
+                <h2 class="text-3xl font-bold text-[var(--highlight-gold-yellow)]">Start Splitting Bills!</h2>
+            </div>
+            <div class="mb-8">
+                <div class="flex border-b border-b-[var(--accent-royal-blue-medium)]">
+                    <a href="{% url 'account_login' %}" class="tab-button flex-1 py-3 text-lg font-bold text-[var(--text-secondary)] border-b-2 border-transparent hover:text-white transition-colors duration-300" id="login-tab-button">Login</a>
+                    <a href="{% url 'account_signup' %}" class="tab-button flex-1 py-3 text-lg font-bold text-[var(--text-secondary)] border-b-2 border-transparent hover:text-white transition-colors duration-300 active" id="signup-tab-button">Sign Up</a>
+                </div>
+            </div>
+
+            <div class="tab-content active" id="signup-tab">
+                <form method="post" action="{% url 'account_signup' %}" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    {# Corrected Form Rendering #}
+                    {% for field in form %}
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.field.widget.input_type == 'checkbox' %}
+                                {{ field }}
+                            {% else %}
+                                <input type="{{ field.field.widget.input_type }}" 
+                                       name="{{ field.name }}" 
+                                       id="{{ field.id_for_label }}" 
+                                       class="auth-input-style" 
+                                       placeholder="{{ field.label }}" 
+                                       value="{{ field.value|default:'' }}" 
+                                       {% if field.field.required %}required{% endif %}>
+                            {% endif %}
+                            {% for error in field.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="text-red-500 text-sm mb-4">
+                            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endif %}
+                    <button class="w-full bg-[var(--highlight-gold-yellow)] text-[var(--bg-deep-navy)] font-bold py-3 px-4 rounded-lg hover:bg-[var(--highlight-gold-yellow-darker)] transition-colors duration-300 transform hover:scale-105 shadow-lg shadow-[var(--highlight-gold-yellow)]/20" type="submit">Create Account</button>
+                </form>
+            </div>
+
+            <div class="mt-12 text-center text-xs text-[var(--text-secondary)]">
+                <p class="mb-2">By continuing, you agree to our</p>
+                <div class="flex justify-center space-x-4">
+                    <a class="hover:text-white hover:underline underline-offset-4 transition-colors duration-300" href="#">Terms of Service</a>
+                    <span class="text-gray-500">|</span>
+                    <a class="hover:text-white hover:underline underline-offset-4 transition-colors duration-300" href="#">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // The original JS for tab switching is now handled by Django's URL routing.
+</script>
+{% endblock %}

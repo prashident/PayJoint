@@ -7,9 +7,6 @@ from django.db import transaction
 from django.db.models import Sum
 from decimal import Decimal
 
-# Import User from django.contrib.auth.models
-from django.contrib.auth.models import User
-
 # Import models and forms from this app
 from .models import Group, Invitation
 from .forms import GroupForm, InvitationForm
@@ -153,7 +150,7 @@ def create_group_view(request):
                     "id": str(group.id),
                     "name": group.name,
                     "description": group.description,
-                    "created_by_id": str(group.created_by.id),
+                    "created_by_id": str(group.created_by.id), # <-- This is the key line
                     "created_by_email": group.created_by.email,
                     "member_ids": member_ids_for_supabase,
                     "created_at": group.created_at.isoformat(),
@@ -417,7 +414,7 @@ def join_group_by_code(request):
 
             try:
                 updated_member_ids = [str(member.id) for member in group.members.all()]
-
+                # Supabase `update` operation depends on synchronized Django and Supabase user IDs.
                 response = supabase.table("groups") \
                     .update({"member_ids": updated_member_ids}) \
                     .eq("id", str(group.id)) \
@@ -451,6 +448,7 @@ def leave_group_view(request, group_id):
 
             try:
                 updated_member_ids = [str(member.id) for member in group.members.all()]
+                # Supabase `update` operation depends on synchronized Django and Supabase user IDs.
                 response = supabase.table("groups") \
                     .update({"member_ids": updated_member_ids}) \
                     .eq("id", str(group.id)) \
@@ -499,6 +497,7 @@ def delete_group_view(request, group_id):
 
     with transaction.atomic():
         try:
+            # Supabase `delete` operation depends on a synchronized Django and Supabase user IDs.
             supabase_response = supabase.table("groups").delete().eq("id", str(group.id)).execute()
 
             if not supabase_response.data:

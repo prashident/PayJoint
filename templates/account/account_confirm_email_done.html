@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Confirm E-mail Address" %} - PayJoint
+{% endblock %}
+
+{% block extra_head %}
+    {{ block.super }} {# <-- ADD THIS LINE #}
+<style type="text/tailwindcss">
+    :root {
+        --bg-deep-navy: #000814;
+        --accent-royal-blue-dark: #001d3d;
+        --accent-royal-blue-medium: #003566;
+        --highlight-gold-yellow: #ffc300;
+        --highlight-gold-yellow-darker: #ffd60a;
+        --text-primary: #ffffff;
+        --text-secondary: #a9a9a9;
+    }
+    body {
+        background-color: var(--bg-deep-navy);
+        font-family: 'Roboto', sans-serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+    }
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(
+            from 0deg at 50% 50%,
+            var(--accent-royal-blue-dark) 0%,
+            var(--accent-royal-blue-medium) 30%,
+            var(--bg-deep-navy) 60%,
+            var(--bg-deep-navy) 100%
+        );
+        animation: rotate 10s linear infinite;
+    }
+    .page-background::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 2rem 2rem;
+        opacity: 0.5;
+    }
+    @keyframes rotate {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block optional_header_content %}
+{# No optional header content for this page, as it's a confirmation #}
+{% endblock optional_header_content %}
+
+{% block content %}
+<div class="relative min-h-screen flex items-center justify-center p-4 overflow-hidden page-background">
+    <div class="login-container relative max-w-md w-full">
+        <div class="relative bg-[var(--bg-deep-navy)] rounded-2xl p-8 z-10 text-center">
+            <div class="flex justify-center items-center mb-4">
+                <div class="w-16 h-16 bg-[var(--accent-royal-blue-medium)] rounded-full flex items-center justify-center">
+                    <span class="text-2xl font-bold text-[var(--highlight-gold-yellow)]">PJ</span>
+                </div>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-4">{% trans "Confirm Your E-mail Address" %}</h1>
+            <p class="text-[var(--text-secondary)] mb-6">
+                {% blocktrans %}We have sent an e-mail to you for verification. Follow the link provided to finalize the signup process. Please check your spam folder if you do not see it within a few minutes.{% endblocktrans %}
+            </p>
+            <p class="text-[var(--text-secondary)] mb-8">
+                {% trans "If you have not received the email, please check your spam folder or try again by logging in." %}
+            </p>
+            <a href="{% url 'account_login' %}" class="w-full bg-[var(--highlight-gold-yellow)] text-[var(--bg-deep-navy)] font-bold py-3 px-4 rounded-lg hover:bg-[var(--highlight-gold-yellow-darker)] transition-colors duration-300 transform hover:scale-105 shadow-lg shadow-[var(--highlight-gold-yellow)]/20 inline-block">
+                {% trans "Go to Login" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

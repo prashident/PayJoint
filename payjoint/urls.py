@@ -1,19 +1,16 @@
 # payjoint/urls.py
+
 from django.contrib import admin
-from django.urls import path, include # Import include
-from django.conf import settings # For media files
-from django.conf.urls.static import static # For media files
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('users.urls')), # Include user-related URLs at the root or /users/
-    path('groups/', include('groups.urls')), # Include group-related URLs
-    path('expenses/', include('expenses.urls')), # Include expense-related URLs (relative to groups where applicable)
-    # Consider what your default landing page is for anonymous users, might be users:login or users:signup
-    path('', include('users.urls')), # Make login/signup accessible at the root or define a root redirect
+    path('', include('users.urls')),
+    path('groups/', include('groups.urls')),
+    path('expenses/', include('expenses.urls')),
+    path('accounts/', include('allauth.urls')), # Correctly includes allauth
 ]
 
-# Serve media files during development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) # Ensure static files are also served
+# ...

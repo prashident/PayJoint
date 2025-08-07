@@ -101,9 +101,21 @@
                         <h2 class="text-2xl font-bold text-[var(--white)]">PayJoint</h2>
                     </div>
 
-                    {# NEW: Add a block for optional header content #}
-                    {% block optional_header_content %}{% endblock optional_header_content %}
-
+                    {# ADDED: Block for optional header content #}
+                    {% block optional_header_content %}
+                        <div class="flex items-center gap-4">
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'users:profile_detail' %}" class="text-[var(--text-light)] hover:text-[var(--gold)]">Profile</a>
+                                <form method="post" action="{% url 'account_logout' %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-[var(--gold)] text-[var(--midnight-navy)] font-semibold rounded-full px-4 py-2 transition-colors duration-200 hover:bg-[var(--bright-yellow)]">Log Out</button>
+                                </form>
+                            {% else %}
+                                <a href="{% url 'account_login' %}" class="text-[var(--text-light)] hover:text-[var(--gold)]">Log In</a>
+                                <a href="{% url 'account_signup' %}" class="bg-[var(--gold)] text-[var(--midnight-navy)] font-semibold rounded-full px-4 py-2 transition-colors duration-200 hover:bg-[var(--bright-yellow)]">Sign Up</a>
+                            {% endif %}
+                        </div>
+                    {% endblock optional_header_content %}
                 </div>
             </header>
 

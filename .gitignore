@@ -16,7 +16,7 @@ __pycache__/
 /media/
 
 # Static files (production output)
-/static/
+# /static/
 
 # Django-specific ignore patterns
 *.log
@@ -26,4 +26,4 @@ __pycache__/
 # Sensitive information (security keys, etc.)
 # The SECRET_KEY and any other keys should be loaded from environment variables,
 # but as a final safety net, we also ignore the settings file if you have a local version.
-payjoint/settings.py
+# payjoint/settings.py
