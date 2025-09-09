@@ -145,11 +145,7 @@ DEFAULT_FROM_EMAIL = 'support@payjointapp.com'
 
 ACCOUNT_EMAIL_CONFIRMATION_TEMPLATE = 'account/email_confirm.html'
 
-ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
-
-if os.environ.get('DJANGO_DEBUG'):
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-
+ALLOWED_HOSTS = ["*"]
 
 
 # DATABASES = {
