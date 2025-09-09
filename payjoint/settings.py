@@ -22,10 +22,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY = "django-insecure-qs_j*+03uv1(-9hv-t0d216h@gjtv_6%vp)jo&)q7y07&k1m7q"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
+# DEBUG = False
+
+
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
-DEBUG = os.environ.get("DEBUG") == "True"
+# DEBUG = os.environ.get("DEBUG") == "False"
+
+DJANGO_DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = DJANGO_DEBUG
 
 # ALLOWED_HOSTS = []
 
@@ -103,7 +108,9 @@ USE_I18N = True
 USE_TZ = True
 
 # Static & Media files
+# Static & Media files
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Add this line
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -138,8 +145,13 @@ DEFAULT_FROM_EMAIL = 'support@payjointapp.com'
 
 ACCOUNT_EMAIL_CONFIRMATION_TEMPLATE = 'account/email_confirm.html'
 
-ALLOWED_HOSTS = [".vercel.app", ".now.sh"]
+ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
 
-DATABASES = {
-    'default': dj_database_url.parse(os.environ.get("DATABASE_URL"), conn_max_age=600, conn_health_checks=True,)
-}
+if os.environ.get('DJANGO_DEBUG'):
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+
+
+# DATABASES = {
+#     'default': dj_database_url.parse(os.environ.get("DATABASE_URL"), conn_max_age=600, conn_health_checks=True,)
+# }

@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: payjoint-web
+    env: python
+    buildCommand: ./build.sh
+    startCommand: gunicorn payjoint.wsgi:application
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: SUPABASE_URL
+        value: "https://tnbfyzliuicmstdkmlej.supabase.co"
+      - key: SUPABASE_KEY
+        value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRuYmZ5emxpdWljbXN0ZGttbGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MzI4ODM4MywiZXhwIjoyMDY4ODY0MzgzfQ.vAgT5fKkRtR8CBPP-eCy7pJNFDQiidYiS_etrDcDUO8"
+      - key: DATABASE_URL
+        value: "postgresql://postgres:passkey@db.tnbfyzliuicmstdkmlej.supabase.co:5432/postgres"
+      - key: EMAIL_HOST
+        value: "smtp.hostinger.com"
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        value: "support@payjointapp.com"
+      - key: EMAIL_HOST_PASSWORD
+        value: "Jointpays@26"
+        
+  - type: postgres
+    name: payjoint-db
+    plan: free
+    databaseName: payjoint_db
+    user: payjoint_user
