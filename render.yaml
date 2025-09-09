@@ -23,9 +23,3 @@ services:
         value: "support@payjointapp.com"
       - key: EMAIL_HOST_PASSWORD
         value: "Jointpays@26"
-        
-  - type: postgres
-    name: payjoint-db
-    plan: free
-    databaseName: payjoint_db
-    user: payjoint_user
