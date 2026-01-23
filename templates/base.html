@@ -1,182 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>{% block title %}PayJoint - Effortless Bill Splitting{% endblock %}</title>
-    {% load static %} {# Load the staticfiles tag #}
-    <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+    {% load static %}
+    <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap"
+        rel="stylesheet" />
+
     <style type="text/tailwindcss">
         :root {
-            --midnight-navy: #000814;
-            --dark-blue: #001d3d;
-            --royal-blue: #003566;
-            --gold: #ffc300;
-            --bright-yellow: #ffd60a;
-            --white: #ffffff;
-            --light-gray: #f8f9fc;
-            --text-dark: #0e111b;
-            --text-light: #e0e0e0;
+            --bg-deep: #0f172a;
+            --bg-charcoal: #1e293b;
+            --accent-yellow: #FACC15;
+            --accent-yellow-hover: #EAB308;
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-surface: rgba(30, 41, 59, 0.7);
         }
+
         body {
-            font-family: "Roboto", sans-serif;
+            background: radial-gradient(circle at top left, var(--bg-charcoal) 0%, var(--bg-deep) 100%);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            @apply min-h-screen flex flex-col;
         }
+
         h1, h2, h3, h4, h5, h6 {
-            font-family: "Montserrat", sans-serif;
+            font-family: 'Montserrat', sans-serif;
         }
-        .bg-brand-gradient {
-            background: linear-gradient(45deg,
-                var(--midnight-navy) 0%,
-                var(--royal-blue) 100%);
+
+        .glass-header {
+            @apply sticky top-0 z-50 backdrop-blur-xl border-b border-white/5 bg-slate-900/60;
         }
-        .dynamic-bg {
-            background: linear-gradient(-45deg, var(--dark-blue), var(--royal-blue), var(--midnight-navy), var(--dark-blue));
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
+
+        /* Standardized Glass Card for all pages */
+        .glass-card {
+            @apply bg-slate-800/40 backdrop-blur-md border border-white/5 rounded-2xl shadow-xl;
         }
-        @keyframes gradient {
-            0% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-        .icon-float {
-            animation: float 3s ease-in-out infinite;
-        }
+
+        /* Animation for logo */
         @keyframes float {
-            0% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-8px);
-            }
-            100% {
-                transform: translateY(0px);
-            }
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
         }
-        .wave-container {
-            position: relative;
+        .logo-float { animation: float 4s ease-in-out infinite; }
+    </style>
+    <style>
+        html {
+            scroll-behavior: smooth;
         }
-        .wave {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                overflow: hidden;
-                line-height: 0;
-                transform: rotate(180deg);
-            }
-            .wave svg {
-                position: relative;
-                display: block;
-                width: calc(100% + 1.3px);
-                height: 80px;
-            }
-            .wave .shape-fill {
-                fill: var(--to-color);
-            }
-        </style>
-        <style>
-            html { scroll-behavior: smooth; }
-        </style>
-        {% block extra_head %}{% endblock %}
-    </head>
-    <body class="bg-[var(--midnight-navy)] text-[var(--text-light)] flex flex-col min-h-screen">
-        <div class="relative flex min-h-screen flex-col overflow-x-hidden">
-            <header class="sticky top-0 z-50 bg-[var(--midnight-navy)]/80 backdrop-blur-sm">
-                <div class="container mx-auto flex items-center justify-between px-6 py-4">
-                    <div class="flex items-center gap-3">
-                        <svg class="h-8 w-8 text-[var(--gold)] transition-transform duration-500 hover:rotate-12" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z" fill="currentColor"></path>
-                        </svg>
-                        <h2 class="text-2xl font-bold text-[var(--white)]">PayJoint</h2>
-                    </div>
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
 
-                    {# ADDED: Block for optional header content #}
-                    {% block optional_header_content %}
-                        <div class="flex items-center gap-4">
-                            {% if user.is_authenticated %}
-                                <a href="{% url 'users:profile_detail' %}" class="text-[var(--text-light)] hover:text-[var(--gold)]">Profile</a>
-                                <form method="post" action="{% url 'account_logout' %}" class="inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="bg-[var(--gold)] text-[var(--midnight-navy)] font-semibold rounded-full px-4 py-2 transition-colors duration-200 hover:bg-[var(--bright-yellow)]">Log Out</button>
-                                </form>
-                            {% else %}
-                                <a href="{% url 'account_login' %}" class="text-[var(--text-light)] hover:text-[var(--gold)]">Log In</a>
-                                <a href="{% url 'account_signup' %}" class="bg-[var(--gold)] text-[var(--midnight-navy)] font-semibold rounded-full px-4 py-2 transition-colors duration-200 hover:bg-[var(--bright-yellow)]">Sign Up</a>
-                            {% endif %}
-                        </div>
-                    {% endblock optional_header_content %}
+<body class="overflow-x-hidden">
+    <header class="glass-header">
+        <div class="container mx-auto flex items-center justify-between px-6 py-4 max-w-[1440px]">
+            <a href="{% url 'users:index' %}" class="flex items-center gap-3 group">
+                <div class="flex items-center justify-center transition-transform group-hover:scale-105">
+                    <img src="{% static 'img/logo.png' %}" alt="PayJoint Logo" class="h-12 w-auto block">
                 </div>
-            </header>
+                <span class="text-2xl font-bold tracking-tight text-white">PayJoint</span>
+            </a>
 
-            <main class="flex-grow">
-                {# Display Django messages (success, error, info, warning) #}
-                {% if messages %}
-                    <div class="container mx-auto px-6 mt-4">
-                        {% for message in messages %}
-                            <div class="p-3 rounded-md mb-2 text-sm
-                                {% if 'success' in message.tags %}bg-green-100 text-green-700{% elif 'error' in message.tags %}bg-red-100 text-red-700{% elif 'info' in message.tags %}bg-blue-100 text-blue-700{% elif 'warning' in message.tags %}bg-yellow-100 text-yellow-700{% endif %}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    </div>
+            {% block optional_header_content %}
+            <div class="flex items-center gap-6">
+                {% if user.is_authenticated %}
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'groups:dashboard' %}"
+                        class="text-sm font-medium text-slate-400 hover:text-yellow-400 transition-colors">Dashboard</a>
+                    <a href="{% url 'users:profile_detail' %}"
+                        class="w-10 h-10 rounded-full border border-white/10 overflow-hidden hover:border-yellow-400 transition-colors">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Profile" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full bg-slate-800 flex items-center justify-center text-xs text-white">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        {% endif %}
+                    </a>
+                    <form method="post" action="{% url 'account_logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="px-5 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-semibold hover:bg-white/10 transition-all">
+                            Log Out
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <a href="{% url 'account_login' %}"
+                    class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Log In</a>
+                <a href="{% url 'account_signup' %}"
+                    class="px-6 py-2.5 rounded-full bg-yellow-400 text-slate-900 font-bold text-sm hover:bg-yellow-300 shadow-lg shadow-yellow-400/10 transition-all">
+                    Get Started
+                </a>
                 {% endif %}
-
-                {% block content %}
-                {# Content from child templates will go here #}
-                {% endblock %}
-            </main>
-
-            <footer class="bg-[var(--midnight-navy)] text-[var(--text-light)]">
-                <div class="container mx-auto px-6 py-12">
-                    <div class="flex flex-col items-center justify-between gap-8 md:flex-row">
-                        <div class="flex flex-col items-center gap-4 text-center md:items-start md:text-left">
-                            <div class="flex items-center gap-3">
-                                <svg class="h-8 w-8 text-[var(--gold)]" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z" fill="currentColor"></path>
-                                </svg>
-                                <h2 class="text-2xl font-bold">PayJoint</h2>
-                            </div>
-                            <p class="text-sm text-gray-400">
-                                © {% now "Y" %} PayJoint. All rights reserved.
-                            </p>
-                        </div>
-                        <div class="flex items-center gap-6">
-                            <a class="text-gray-400 transition-colors hover:text-[var(--bright-yellow)]" href="#">
-                                <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M247.39,68.94A8,8,0,0,0,240,64H209.57A48.66,48.66,0,0,0,168.1,40a46.91,46.91,0,0,0-33.75,13.7A47.9,47.9,0,0,0,120,88v6.09C79.74,83.47,46.81,50.72,46.46,50.37a8,8,0,0,0-13.65,4.92c-4.31,47.79,9.57,79.77,22,98.18a110.93,110.93,0,0,0,21.88,24.2c-15.23,17.53-39.21,26.74-39.47,26.84a8,8,0,0,0-3.85,11.93c.75,1.12,3.75,5.05,11.08,8.72C53.51,229.7,65.48,232,80,232c70.67,0,129.72-54.42,135.75-124.44l29.91-29.9A8,8,0,0,0,247.39,68.94Zm-45,29.41a8,8,0,0,0-2.32,5.14C196,166.58,143.28,216,80,216c-10.56,0-18-1.4-23.22-3.08,11.51-6.25,27.56-17,37.88-32.48A8,8,0,0,0,92,169.08c-.47-.27-43.91-26.34-44-96,16,13,45.25,33.17,78.67,38.79A8,8,0,0,0,136,104V88a32,32,0,0,1,9.6-22.92A30.94,30.94,0,0,1,167.9,56c12.66.16,24.49,7.88,29.44,19.21A8,8,0,0,0,204.67,80h16Z"></path>
-                                </svg>
-                            </a>
-                            <a class="text-gray-400 transition-colors hover:text-[var(--bright-yellow)]" href="#">
-                                <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160ZM176,24H80A56.06,56.06,0,0,0,24,80v96a56.06,56.06,0,0,0,56,56h96a56.06,56.06,0,0,0,56-56V80A56.06,56.06,0,0,0,176,24Zm40,152a40,40,0,0,1-40,40H80a40,40,0,0,1-40-40V80A40,40,0,0,1,80,40h96a40,40,0,0,1,40,40ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"></path>
-                                </svg>
-                            </a>
-                            <a class="text-gray-400 transition-colors hover:text-[var(--bright-yellow)]" href="#">
-                                <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V152h24a8,8,0,0,0,0-16H136V112a16,16,0,0,1,16-16h16a8,8,0,0,0,0-16H152a32,32,0,0,0-32,32v24H96a8,8,0,0,0,0,16h24v63.63a88,88,0,1,1,16,0Z"></path>
-                                </svg>
-                            </a>
-                        </div>
-                        <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2">
-                            <a class="text-sm text-gray-400 transition-colors hover:text-[var(--royal-blue)]" href="#">Terms</a>
-                            <a class="text-sm text-gray-400 transition-colors hover:text-[var(--royal-blue)]" href="#">Privacy</a>
-                            <a class="text-sm text-gray-400 transition-colors hover:text-[var(--royal-blue)]" href="#">Contact</a>
-                        </nav>
-                    </div>
-                </div>
-            </footer>
+            </div>
+            {% endblock optional_header_content %}
         </div>
-        {% block extra_js %}{% endblock %}
-    </body>
-    </html>
+    </header>
+
+    <main class="flex-grow">
+        {% if messages %}
+        <div class="container mx-auto px-6 mt-6 max-w-[1440px]">
+            {% for message in messages %}
+            <div
+                class="flex items-center gap-3 p-4 rounded-xl border backdrop-blur-md mb-4 animate-in fade-in slide-in-from-top-4 duration-300
+                        {% if 'success' in message.tags %}bg-emerald-500/10 border-emerald-500/20 text-emerald-400{% elif 'error' in message.tags %}bg-rose-500/10 border-rose-500/20 text-rose-400{% else %}bg-blue-500/10 border-blue-500/20 text-blue-400{% endif %}">
+                <span class="text-lg">
+                    {% if 'success' in message.tags %}✓{% elif 'error' in message.tags %}✕{% else %}ℹ{% endif %}
+                </span>
+                <p class="text-sm font-medium">{{ message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="border-t border-white/5 bg-slate-950/40 backdrop-blur-md mt-20">
+        <div class="container mx-auto px-6 py-12 max-w-[1440px]">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-10">
+                <div class="flex flex-col items-center md:items-start gap-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-yellow-400 flex items-center justify-center text-slate-900 font-bold text-base">
+                            P</div>
+                        <h2 class="text-xl font-bold text-white">PayJoint</h2>
+                    </div>
+                    <p class="text-sm text-slate-500 max-w-xs text-center md:text-left">
+                        Split bills, not friendships. The modern way to manage shared expenses.
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-center gap-6">
+                    <div class="flex gap-6">
+                        <a href="#" class="text-slate-500 hover:text-yellow-400 transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="text-slate-500 hover:text-yellow-400 transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.947.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                            </svg>
+                        </a>
+                    </div>
+                    <nav class="flex gap-8 text-xs font-medium text-slate-500">
+                        <a href="#" class="hover:text-white transition-colors">Privacy</a>
+                        <a href="#" class="hover:text-white transition-colors">Terms</a>
+                        <a href="#" class="hover:text-white transition-colors">Contact</a>
+                    </nav>
+                </div>
+
+                <p class="text-xs text-slate-600">
+                    © {% now "Y" %} PayJoint. Built for better sharing.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

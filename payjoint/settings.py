@@ -13,29 +13,26 @@ import os
 import dj_database_url
 from dotenv import load_dotenv
 
-# load_dotenv()
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = "django-insecure-qs_j*+03uv1(-9hv-t0d216h@gjtv_6%vp)jo&)q7y07&k1m7q"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False
-# .env
-# DJANGO_SECRET_KEY='hhdcqf22qwrr8xk0=_w-^uo=_b8j18f443fypx+he5(c4emok4'
 
 
-SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # DEBUG = os.environ.get("DEBUG") == "False"
 
 DJANGO_DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 DEBUG = DJANGO_DEBUG
 
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
@@ -114,6 +111,10 @@ USE_TZ = True
 # Static & Media files
 STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Add this line
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -143,18 +144,12 @@ EMAIL_HOST = 'smtp.hostinger.com'
 EMAIL_PORT = 587  # Correct port for TLS
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'support@payjointapp.com'
-# EMAIL_HOST_PASSWORD = 'Jointpays@26'  # Use an environment variable in production
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-
+EMAIL_HOST_PASSWORD = 'Jointpays@26'  # Use an environment variable in production
 DEFAULT_FROM_EMAIL = 'support@payjointapp.com'
 
 ACCOUNT_EMAIL_CONFIRMATION_TEMPLATE = 'account/email_confirm.html'
 
-#ALLOWED_HOSTS = ["*",
-#    'payjointapp.com',
-#    'www.payjointapp.com',
-#    '51.21.252.3'
-#]
+ALLOWED_HOSTS = ["*"]
 
 
 # DATABASES = {

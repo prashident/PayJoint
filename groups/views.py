@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from decimal import Decimal
 
 # Import models and forms from this app
@@ -27,62 +27,72 @@ def dashboard_view(request):
 
     total_owed_to_user = Decimal('0.00')
     total_user_owes = Decimal('0.00')
-
     groups_with_details = []
 
     for group in user_groups:
-        # Now importing Expense from expenses.models explicitly
-        expenses = Expense.objects.filter(group=group) # Use Expense model from its app
+        expenses = Expense.objects.filter(group=group)
         members = group.members.all()
 
+        # 1. Initialize the balance dictionary for this specific group
         balances_in_group = {member.id: Decimal(0) for member in members}
+        
+        # 2. Calculate who owes what based on expenses
         for expense in expenses:
             payer_id = expense.paid_by.id
             amount = expense.amount
-
             balances_in_group[payer_id] += amount
 
             if expense.participants.exists():
-                share = amount / Decimal(expense.participants.count())
+                count = expense.participants.count()
+                share = amount / Decimal(count)
                 for participant in expense.participants.all():
                     balances_in_group[participant.id] -= share
         
+        # 3. NOW extract the logged-in user's balance for this group
         user_balance_in_this_group = balances_in_group.get(request.user.id, Decimal(0))
         
+        # 4. Update the global totals for the dashboard header
         if user_balance_in_this_group > 0:
             total_owed_to_user += user_balance_in_this_group
         elif user_balance_in_this_group < 0:
             total_user_owes += abs(user_balance_in_this_group)
 
+        # 5. Budget logic
         group_total_expenses = group.get_total_expenses_amount()
         budget_limit = None
-
-        if group.budget is not None and group.budget > 0:
+        if group.budget and group.budget > 0:
             budget_limit = group.budget
-        elif group.group_type == 'Trip' and group.individual_budget is not None and group.individual_budget > 0:
+        elif group.group_type == 'Trip' and group.individual_budget:
             budget_limit = group.individual_budget * Decimal(group.members.count())
-        elif group.group_type == 'Home' and group.monthly_home_budget is not None and group.monthly_home_budget > 0:
+        elif group.group_type == 'Home' and group.monthly_home_budget:
             budget_limit = group.monthly_home_budget
 
         budget_percentage_spent = 0
-        if budget_limit is not None and budget_limit > 0:
+        if budget_limit and budget_limit > 0:
             budget_percentage_spent = (group_total_expenses / budget_limit) * 100
             if budget_percentage_spent > 100:
                 budget_percentage_spent = 100
 
-        remaining_budget_amount = None
-        if budget_limit is not None:
-            remaining_budget_amount = budget_limit - group_total_expenses
+        remaining_budget_amount = (budget_limit - group_total_expenses) if budget_limit else None
 
         groups_with_details.append({
             'group': group,
             'user_balance': user_balance_in_this_group.quantize(Decimal('0.01')),
             'total_expenses_amount': group_total_expenses.quantize(Decimal('0.01')),
-            'budget_limit': budget_limit.quantize(Decimal('0.01')) if budget_limit is not None else None,
+            'budget_limit': budget_limit.quantize(Decimal('0.01')) if budget_limit else None,
             'budget_percentage_spent': round(budget_percentage_spent, 2),
-            'remaining_budget_amount': remaining_budget_amount.quantize(Decimal('0.01')) if remaining_budget_amount is not None else None,
+            'remaining_budget_amount': remaining_budget_amount.quantize(Decimal('0.01')) if remaining_budget_amount else None,
         })
 
+    # 6. Calculate Net Balance after the loop finishes
+    net_balance = total_owed_to_user - total_user_owes
+
+    # 7. Fetch 5 Recent Activities (OR logic: Paid by you OR you were a participant)
+    recent_activities = Expense.objects.filter(
+        group__in=user_groups
+    ).filter(
+        Q(paid_by=request.user) | Q(participants=request.user)
+    ).distinct().order_by('-created_at')[:5]
 
     context = {
         'user_groups': user_groups,
@@ -90,6 +100,8 @@ def dashboard_view(request):
         'current_user_id': request.user.id,
         'total_owed_to_user': total_owed_to_user.quantize(Decimal('0.01')),
         'total_user_owes': total_user_owes.quantize(Decimal('0.01')),
+        'net_balance': net_balance.quantize(Decimal('0.01')),
+        'recent_activities': recent_activities,
     }
     return render(request, 'groups/dashboard.html', context)
 
@@ -150,7 +162,7 @@ def create_group_view(request):
                     "id": str(group.id),
                     "name": group.name,
                     "description": group.description,
-                    "created_by_id": str(group.created_by.id), # <-- This is the key line
+                    "created_by_id": str(group.created_by.id), 
                     "created_by_email": group.created_by.email,
                     "member_ids": member_ids_for_supabase,
                     "created_at": group.created_at.isoformat(),
@@ -174,7 +186,7 @@ def create_group_view(request):
                     messages.error(request, f"An error occurred while syncing with Supabase: {e}")
                     raise
 
-            return redirect('groups:dashboard') # Changed redirect name
+            return redirect('groups:dashboard')
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -192,7 +204,7 @@ def edit_group(request, group_id):
 
     if group.created_by != request.user:
         messages.error(request, "You do not have permission to edit this group.")
-        return redirect('groups:group_detail', group_id=group.id) # Changed redirect name
+        return redirect('groups:group_detail', group_id=group.id)
 
     if request.method == 'POST':
         form = GroupForm(request.POST, request.FILES, instance=group)
@@ -268,7 +280,7 @@ def edit_group(request, group_id):
                     messages.error(request, f"An error occurred while syncing updates with Supabase: {e}")
                     raise
 
-            return redirect('groups:group_detail', group_id=group.id) # Changed redirect name
+            return redirect('groups:group_detail', group_id=group.id)
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -281,7 +293,7 @@ def edit_group(request, group_id):
         if group.individual_budget is not None:
             form.initial['set_individual_budget'] = True
 
-    return render(request, 'create_group_modal.html', {'form': form})
+    return render(request, 'groups/create_group_modal.html', {'form': form})
 
 @login_required
 def group_detail_view(request, group_id):
@@ -289,10 +301,10 @@ def group_detail_view(request, group_id):
 
     if request.user not in group.members.all():
         messages.error(request, "You are not a member of this group.")
-        return redirect('groups:dashboard') # Changed redirect name
+        return redirect('groups:dashboard')
 
     # Now importing Expense from expenses.models explicitly
-    expenses = Expense.objects.filter(group=group) # Use Expense model from its app
+    expenses = Expense.objects.filter(group=group) 
     members = group.members.all()
 
     total_spent = group.get_total_expenses_amount()
@@ -365,14 +377,14 @@ def accept_invitation_view(request, invitation_id):
 
     if invitation.status != 'pending' or invitation.invited_email != request.user.email:
         messages.error(request, "Invalid or already processed invitation.")
-        return redirect('groups:dashboard') # Changed redirect name
+        return redirect('groups:dashboard')
 
     with transaction.atomic():
         invitation.group.members.add(request.user)
         invitation.status = 'accepted'
         invitation.save()
     messages.success(request, f"You have joined the group '{invitation.group.name}'!")
-    return redirect('groups:dashboard') # Changed redirect name
+    return redirect('groups:dashboard')
 
 @login_required
 def decline_invitation_view(request, invitation_id):
@@ -380,12 +392,12 @@ def decline_invitation_view(request, invitation_id):
 
     if invitation.status != 'pending' or invitation.invited_email != request.user.email:
         messages.error(request, "Invalid or already processed invitation.")
-        return redirect('groups:dashboard') # Changed redirect name
+        return redirect('groups:dashboard')
 
     invitation.status = 'declined'
     invitation.save()
     messages.info(request, f"You have declined the invitation to '{invitation.group.name}'.")
-    return redirect('groups:dashboard') # Changed redirect name
+    return redirect('groups:dashboard')
 
 @login_required
 def join_group_by_code(request):
@@ -394,20 +406,20 @@ def join_group_by_code(request):
 
         if not group_code:
             messages.error(request, "Please enter a group code.")
-            return redirect('groups:dashboard') # Changed redirect name
+            return redirect('groups:dashboard')
 
         try:
             group = Group.objects.get(id=group_code)
         except Group.DoesNotExist:
             messages.error(request, "Group not found with the provided code.")
-            return redirect('groups:dashboard') # Changed redirect name
+            return redirect('groups:dashboard')
         except ValueError:
             messages.error(request, "Invalid group code format.")
-            return redirect('groups:dashboard') # Changed redirect name
+            return redirect('groups:dashboard')
 
         if request.user in group.members.all():
             messages.info(request, f"You are already a member of '{group.name}'.")
-            return redirect('groups:group_detail', group_id=group.id) # Changed redirect name
+            return redirect('groups:group_detail', group_id=group.id)
 
         with transaction.atomic():
             group.members.add(request.user)
@@ -430,9 +442,9 @@ def join_group_by_code(request):
                 messages.error(request, f"An error occurred while joining group and syncing with Supabase: {e}")
                 raise
 
-        return redirect('groups:group_detail', group_id=group.id) # Changed redirect name
+        return redirect('groups:group_detail', group_id=group.id)
     else:
-        return redirect('groups:dashboard') # Changed redirect name
+        return redirect('groups:dashboard')
 
 @login_required
 def leave_group_view(request, group_id):
@@ -440,7 +452,7 @@ def leave_group_view(request, group_id):
 
     if group.created_by == request.user and group.members.count() == 1:
         messages.error(request, "You are the sole creator and member. You cannot leave the group. You must delete it instead.")
-        return redirect('groups:group_detail', group_id=group.id) # Changed redirect name
+        return redirect('groups:group_detail', group_id=group.id)
 
     if request.user in group.members.all():
         with transaction.atomic():
@@ -467,7 +479,7 @@ def leave_group_view(request, group_id):
     else:
         messages.info(request, "You are not a member of this group.")
 
-    return redirect('groups:dashboard') # Changed redirect name
+    return redirect('groups:dashboard')
 
 @login_required
 def delete_group_view(request, group_id):
@@ -475,11 +487,11 @@ def delete_group_view(request, group_id):
 
     if group.created_by != request.user:
         messages.error(request, "You are not authorized to delete this group.")
-        return redirect('groups:group_detail', group_id=group.id) # Changed redirect name
+        return redirect('groups:group_detail', group_id=group.id)
 
     members = group.members.all()
     # Now importing Expense from expenses.models explicitly
-    expenses = Expense.objects.filter(group=group) # Use Expense model from its app
+    expenses = Expense.objects.filter(group=group)
 
     balances = {member.id: 0 for member in members}
     for expense in expenses:
@@ -493,7 +505,7 @@ def delete_group_view(request, group_id):
 
     if any(abs(balance) > 0.01 for balance in balances.values()):
         messages.error(request, "Cannot delete group: There are outstanding balances. Please settle all expenses first.")
-        return redirect('groups:group_detail', group_id=group.id) # Changed redirect name
+        return redirect('groups:group_detail', group_id=group.id)
 
     with transaction.atomic():
         try:
@@ -512,14 +524,14 @@ def delete_group_view(request, group_id):
             messages.error(request, f"An error occurred during group deletion: {e}")
             raise
 
-    return redirect('groups:dashboard') # Changed redirect name
+    return redirect('groups:dashboard')
 
 @login_required
 def share_group_link_view(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     if request.user not in group.members.all():
         messages.error(request, "You are not a member of this group.")
-        return redirect('groups:dashboard') # Changed redirect name
+        return redirect('groups:dashboard')
 
     context = {
         'group': group,
