@@ -1,11 +1,16 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}?v=1.3"">
+
+    <link rel=" alternate icon" type="image/png" href="{% static 'img/logo.png' %}">
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>{% block title %}PayJoint - Effortless Bill Splitting{% endblock %}</title>
-    {% load static %}
+
     <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com" rel="preconnect" />
