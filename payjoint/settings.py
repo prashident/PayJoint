@@ -144,12 +144,19 @@ EMAIL_HOST = 'smtp.hostinger.com'
 EMAIL_PORT = 587  # Correct port for TLS
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'support@payjointapp.com'
-EMAIL_HOST_PASSWORD = 'Jointpays@26'  # Use an environment variable in production
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = 'support@payjointapp.com'
 
 ACCOUNT_EMAIL_CONFIRMATION_TEMPLATE = 'account/email_confirm.html'
 
-ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ["*"]
+raw_hosts = os.environ.get("ALLOWED_HOSTS", "")
+
+if raw_hosts == "*":
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = raw_hosts.split(",")
+
 
 
 # DATABASES = {
