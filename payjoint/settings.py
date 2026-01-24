@@ -19,7 +19,6 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = "django-insecure-qs_j*+03uv1(-9hv-t0d216h@gjtv_6%vp)jo&)q7y07&k1m7q"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False
@@ -139,13 +138,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.hostinger.com'
 EMAIL_PORT = 587  # Correct port for TLS
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'support@payjointapp.com'
-EMAIL_HOST_PASSWORD = 'Jointpays@26'  # Use an environment variable in production
+EMAIL_HOST_USER = 'support@payjointapp.com'  # Use an environment variable in production
 DEFAULT_FROM_EMAIL = 'support@payjointapp.com'
 
 ACCOUNT_EMAIL_CONFIRMATION_TEMPLATE = 'account/email_confirm.html'
-
-ALLOWED_HOSTS = ["*"]
 
 
 # DATABASES = {
