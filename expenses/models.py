@@ -29,6 +29,7 @@ class Expense(models.Model):
         verbose_name="Participants",
         blank=True
     )
+    category = models.CharField(max_length=50, default='Misc')
 
     settled_by = models.ManyToManyField(
         'auth.User', 
