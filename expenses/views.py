@@ -21,40 +21,41 @@ supabase: Client = create_client(supabase_url, supabase_key)
 def add_expense_view(request, group_id):
     group = get_object_or_404(Group, id=group_id)
 
+    # Security check
     if request.user not in group.members.all():
-        messages.error(request, "You cannot add expenses to a group you are not a member of.")
-        return redirect('groups:dashboard') # Changed redirect name
+        messages.error(request, "Access denied.")
+        return redirect('groups:dashboard')
 
     if request.method == 'POST':
+        # 1. Capture the data from the modal
         form = ExpenseForm(request.POST)
+        
+        # 2. Re-bind querysets to the specific group
         form.fields['participants'].queryset = group.members.all()
         form.fields['paid_by'].queryset = group.members.all()
 
         if form.is_valid():
             expense = form.save(commit=False)
             expense.group = group
-            expense.paid_by = form.cleaned_data['paid_by']
+            # If your modal doesn't have a 'paid_by' selector, default to current user
+            expense.paid_by = form.cleaned_data.get('paid_by') or request.user
             expense.save()
-            expense.participants.set(form.cleaned_data['participants'])
+            
+            # Use 'set()' for ManyToMany fields
+            # If modal doesn't specify participants, default to all members
+            participants = form.cleaned_data.get('participants') or group.members.all()
+            expense.participants.set(participants)
+            
             messages.success(request, "Expense added successfully!")
-            return redirect('groups:group_detail', group_id=group.id) # Changed redirect name
         else:
+            # If form is invalid, send errors to messages so they show up on the Group Detail page
             for field, errors in form.errors.items():
                 for error in errors:
-                    messages.error(request, f"{field.replace('_', ' ').title()}: {error}")
-    else:
-        form = ExpenseForm()
-        form.fields['participants'].queryset = group.members.all()
-        form.fields['paid_by'].queryset = group.members.all()
-        form.initial['paid_by'] = request.user
-        form.initial['participants'] = group.members.all()
-
-    context = {
-        'form': form,
-        'group': group,
-    }
-    return render(request, 'expenses/add_expense_modal.html', context)
-
+                    messages.error(request, f"{field.title()}: {error}")
+    
+    # ALWAYS redirect back to the Detail page, never render a separate page
+    return redirect('groups:group_detail', group_id=group.id)
+    
 @login_required
 def delete_expense(request, expense_id):
     if request.method == 'POST':

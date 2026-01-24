@@ -37,12 +37,14 @@
 {% block optional_header_content %}
 <div class="flex items-center gap-4">
     <a href="{% url 'users:profile_detail' %}" class="group relative hidden lg:block">
+
+        <!-- show the username after the profile button -->
         <div
             class="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border border-slate-500 flex items-center justify-center text-sm font-medium text-white ring-2 ring-transparent group-hover:ring-yellow-400/50 transition-all overflow-hidden">
             {% if user.profile_picture %}
             <img src="{{ user.profile_picture.url }}" alt="User" class="w-full h-full object-cover">
             {% else %}
-            {{ user.username|make_list|first|upper }}
+            <span class="text-slate-900 text-xl font-black">{{ user.username.0|upper }}</span>
             {% endif %}
         </div>
     </a>

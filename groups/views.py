@@ -295,67 +295,51 @@ def group_detail_view(request, group_id):
         messages.error(request, "You are not a member of this group.")
         return redirect('groups:dashboard')
 
-    # Now importing Expense from expenses.models explicitly
-    expenses = Expense.objects.filter(group=group) 
+    expenses = Expense.objects.filter(group=group).order_by('-created_at') 
     members = group.members.all()
 
-    total_spent = group.get_total_expenses_amount()
-    remaining_budget = group.get_remaining_budget()
+    total_spent = group.get_total_expenses_amount() or Decimal(0)
+    
+    # Calculate remaining budget safely
+    if group.budget and group.budget > 0:
+        remaining_budget = group.budget - total_spent
+    else:
+        remaining_budget = None  # Signal to template to show "Total Spent" instead
 
+    # Balance Calculation Logic (Your existing logic is solid)
     balances = {member.id: Decimal(0) for member in members}
     for expense in expenses:
-        payer_id = expense.paid_by.id
-        amount = expense.amount
-
-        balances[payer_id] += amount
-
+        balances[expense.paid_by.id] += expense.amount
         if expense.participants.exists():
-            share = amount / Decimal(expense.participants.count())
+            share = expense.amount / Decimal(expense.participants.count())
             for participant in expense.participants.all():
                 balances[participant.id] -= share
 
-    formatted_balances = []
-    for member in members:
-        balance = balances.get(member.id, Decimal(0))
-        if balance != Decimal(0):
-            formatted_balances.append({
-                'user': member,
-                'balance': balance
-            })
-
+    # Settlement Algorithm (Your existing greedy algorithm)
     settlements = []
-    positive_balances = sorted([b for b in formatted_balances if b['balance'] > Decimal(0)], key=lambda x: x['balance'], reverse=True)
-    negative_balances = sorted([b for b in formatted_balances if b['balance'] < Decimal(0)], key=lambda x: x['balance'])
+    pos_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] > 0], key=lambda x: x['bal'], reverse=True)
+    neg_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] < 0], key=lambda x: x['bal'])
 
     i, j = 0, 0
-    while i < len(negative_balances) and j < len(positive_balances):
-        debtor = negative_balances[i]
-        creditor = positive_balances[j]
-
-        amount_to_settle = min(abs(debtor['balance']), creditor['balance'])
-
-        settlements.append({
-            'from_user': debtor['user'],
-            'to_user': creditor['user'],
-            'amount': amount_to_settle
-        })
-
-        debtor['balance'] += amount_to_settle
-        creditor['balance'] -= amount_to_settle
-
-        if round(debtor['balance'], 2) == Decimal(0):
-            i += 1
-        if round(creditor['balance'], 2) == Decimal(0):
-            j += 1
+    while i < len(neg_balances) and j < len(pos_balances):
+        amount = min(abs(neg_balances[i]['bal']), pos_balances[j]['bal'])
+        if amount > Decimal('0.01'):
+            settlements.append({
+                'from_user': neg_balances[i]['user'],
+                'to_user': pos_balances[j]['user'],
+                'amount': amount.quantize(Decimal('1')) # Round for clean UI
+            })
+        neg_balances[i]['bal'] += amount
+        pos_balances[j]['bal'] -= amount
+        if abs(neg_balances[i]['bal']) < Decimal('0.01'): i += 1
+        if abs(pos_balances[j]['bal']) < Decimal('0.01'): j += 1
     
-    current_user_balance_val = balances.get(request.user.id, Decimal(0))
-    current_user_balance = current_user_balance_val.quantize(Decimal('0.01'))
+    current_user_balance = balances.get(request.user.id, Decimal(0)).quantize(Decimal('0.01'))
 
     context = {
         'group': group,
         'expenses': expenses,
         'members': members,
-        'formatted_balances': formatted_balances,
         'settlements': settlements,
         'total_spent': total_spent,
         'remaining_budget': remaining_budget,
