@@ -4,11 +4,27 @@ from django.contrib.auth.models import User # Group model needs User
 import uuid
 from django.db.models import Sum
 from decimal import Decimal
+import random
+import string
+
+def generate_short_code():
+    # Generates a 6-character alphanumeric code
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 class Group(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    invite_code = models.CharField(max_length=6, unique=True, editable=False, null=True)
     name = models.CharField(max_length=255, verbose_name="Group Name")
     description = models.TextField(blank=True,null = True, verbose_name="Group Description (optional)")
+
+    def save(self, *args, **kwargs):
+        if not self.invite_code:
+            self.invite_code = generate_short_code()
+            # Check for collisions
+            while Group.objects.filter(invite_code=self.invite_code).exists():
+                self.invite_code = generate_short_code()
+        super().save(*args, **kwargs)
+
     created_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -133,3 +149,5 @@ class Invitation(models.Model):
 
     def __str__(self):
         return f"Invitation to {self.group.name} for {self.invited_email} ({self.status})"
+
+

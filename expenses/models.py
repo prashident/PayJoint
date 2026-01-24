@@ -30,6 +30,12 @@ class Expense(models.Model):
         blank=True
     )
 
+    settled_by = models.ManyToManyField(
+        'auth.User', 
+        related_name='settled_splits', 
+        blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
 
     class Meta:

@@ -54,3 +54,38 @@ def add_expense_view(request, group_id):
         'group': group,
     }
     return render(request, 'expenses/add_expense_modal.html', context)
+
+@login_required
+def delete_expense(request, expense_id):
+    if request.method == 'POST':
+        expense = get_object_or_404(Expense, id=expense_id)
+        group_id = expense.group.id
+        
+        # Security: Only allow the person who paid or the group creator to delete
+        if request.user == expense.paid_by or request.user == expense.group.created_by:
+            expense.delete()
+            messages.success(request, "Expense deleted successfully.")
+        else:
+            messages.error(request, "You don't have permission to delete this expense.")
+            
+        return redirect('groups:group_detail', group_id=group_id)
+    
+    return redirect('groups:dashboard')
+
+
+@login_required
+def settle_expense_part(request, expense_id):
+    if request.method == 'POST':
+        expense = get_object_or_404(Expense, id=expense_id)
+        
+        # Check if user is actually part of this expense
+        if request.user in expense.participants.all():
+            if request.user in expense.settled_by.all():
+                expense.settled_by.remove(request.user) # Unsettle
+                messages.info(request, "Marked as unsettled.")
+            else:
+                expense.settled_by.add(request.user) # Settle
+                messages.success(request, "Your share is marked as paid!")
+        
+        return redirect('groups:group_detail', group_id=expense.group.id)
+    return redirect('groups:dashboard')

@@ -11,8 +11,9 @@ urlpatterns = [
     path('<uuid:group_id>/edit/', views.edit_group, name='edit_group'),
     path('invitations/accept/<uuid:invitation_id>/', views.accept_invitation_view, name='accept_invitation'),
     path('invitations/decline/<uuid:invitation_id>/', views.decline_invitation_view, name='decline_invitation'),
-    path('join/', views.join_group_by_code, name='join_group_by_code'),
+    path('join/', views.join_group, name='join_group'),
     path('<uuid:group_id>/leave/', views.leave_group_view, name='leave_group'),
     path('<uuid:group_id>/delete/', views.delete_group_view, name='delete_group'),
     path('<uuid:group_id>/share-link/', views.share_group_link_view, name='share_group_link'),
+    path('<uuid:group_id>/update-budget/', views.update_budget, name='update_budget'),
 ]

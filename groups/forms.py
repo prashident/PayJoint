@@ -83,16 +83,13 @@ class GroupForm(forms.ModelForm):
         group_type = cleaned_data.get('group_type')
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
-        budget = cleaned_data.get('budget')
         individual_budget = cleaned_data.get('individual_budget')
-        monthly_home_budget = cleaned_data.get('monthly_home_budget')
         set_individual_budget = cleaned_data.get('set_individual_budget')
 
         if group_type == 'Trip':
-            if not start_date:
-                self.add_error('start_date', "Start date is required for Trip groups.")
-            if not end_date:
-                self.add_error('end_date', "End date is required for Trip groups.")
+            # ✅ DATES ARE NOW OPTIONAL: Removed 'if not start_date' requirements.
+            
+            # Only validate the range if both dates are actually entered
             if start_date and end_date and start_date > end_date:
                 self.add_error('end_date', "End date cannot be before the start date.")
 
@@ -101,14 +98,13 @@ class GroupForm(forms.ModelForm):
             elif not set_individual_budget:
                 cleaned_data['individual_budget'] = None
         else:
+            # Reset fields if group is not a Trip
             cleaned_data['start_date'] = None
             cleaned_data['end_date'] = None
             cleaned_data['individual_budget'] = None
             cleaned_data['set_individual_budget'] = False
 
-        if group_type == 'Home':
-            pass
-        else:
+        if group_type != 'Home':
             cleaned_data['monthly_home_budget'] = None
 
         return cleaned_data

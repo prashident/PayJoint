@@ -33,10 +33,8 @@ def dashboard_view(request):
         expenses = Expense.objects.filter(group=group)
         members = group.members.all()
 
-        # 1. Initialize the balance dictionary for this specific group
+        # 1. Calculate Group Balances
         balances_in_group = {member.id: Decimal(0) for member in members}
-        
-        # 2. Calculate who owes what based on expenses
         for expense in expenses:
             payer_id = expense.paid_by.id
             amount = expense.amount
@@ -48,18 +46,19 @@ def dashboard_view(request):
                 for participant in expense.participants.all():
                     balances_in_group[participant.id] -= share
         
-        # 3. NOW extract the logged-in user's balance for this group
         user_balance_in_this_group = balances_in_group.get(request.user.id, Decimal(0))
         
-        # 4. Update the global totals for the dashboard header
+        # 2. Update Global Totals
         if user_balance_in_this_group > 0:
             total_owed_to_user += user_balance_in_this_group
         elif user_balance_in_this_group < 0:
             total_user_owes += abs(user_balance_in_this_group)
 
-        # 5. Budget logic
-        group_total_expenses = group.get_total_expenses_amount()
+        # 3. Enhanced Budget Logic
+        total_spent = group.get_total_expenses_amount() # Matches 'total_spent' in template
         budget_limit = None
+        
+        # Determine the effective limit based on group settings
         if group.budget and group.budget > 0:
             budget_limit = group.budget
         elif group.group_type == 'Trip' and group.individual_budget:
@@ -67,44 +66,37 @@ def dashboard_view(request):
         elif group.group_type == 'Home' and group.monthly_home_budget:
             budget_limit = group.monthly_home_budget
 
-        budget_percentage_spent = 0
+        # Calculate percentage for the progress bar
+        budget_percent = 0
         if budget_limit and budget_limit > 0:
-            budget_percentage_spent = (group_total_expenses / budget_limit) * 100
-            if budget_percentage_spent > 100:
-                budget_percentage_spent = 100
-
-        remaining_budget_amount = (budget_limit - group_total_expenses) if budget_limit else None
+            budget_percent = (total_spent / budget_limit) * 100
+            # Cap at 100 so the progress bar doesn't overflow the UI
+            budget_percent = min(float(budget_percent), 100.0)
 
         groups_with_details.append({
             'group': group,
             'user_balance': user_balance_in_this_group.quantize(Decimal('0.01')),
-            'total_expenses_amount': group_total_expenses.quantize(Decimal('0.01')),
+            'total_spent': total_spent.quantize(Decimal('0.01')),
             'budget_limit': budget_limit.quantize(Decimal('0.01')) if budget_limit else None,
-            'budget_percentage_spent': round(budget_percentage_spent, 2),
-            'remaining_budget_amount': remaining_budget_amount.quantize(Decimal('0.01')) if remaining_budget_amount else None,
+            'budget_percent': round(budget_percent, 2), # Used by progress bar width
         })
 
-    # 6. Calculate Net Balance after the loop finishes
     net_balance = total_owed_to_user - total_user_owes
 
-    # 7. Fetch 5 Recent Activities (OR logic: Paid by you OR you were a participant)
     recent_activities = Expense.objects.filter(
         group__in=user_groups
     ).filter(
         Q(paid_by=request.user) | Q(participants=request.user)
-    ).distinct().order_by('-created_at')[:5]
+    ).distinct().order_by('-created_at')[:6]
 
     context = {
-        'user_groups': user_groups,
         'groups_with_details': groups_with_details,
-        'current_user_id': request.user.id,
         'total_owed_to_user': total_owed_to_user.quantize(Decimal('0.01')),
         'total_user_owes': total_user_owes.quantize(Decimal('0.01')),
         'net_balance': net_balance.quantize(Decimal('0.01')),
         'recent_activities': recent_activities,
     }
     return render(request, 'groups/dashboard.html', context)
-
 @login_required
 def create_group_view(request):
     if request.method == 'POST':
@@ -400,51 +392,35 @@ def decline_invitation_view(request, invitation_id):
     return redirect('groups:dashboard')
 
 @login_required
-def join_group_by_code(request):
+def join_group(request):
     if request.method == 'POST':
-        group_code = request.POST.get('group_code')
+        # Ensure we use .upper() to match the stored code
+        input_code = request.POST.get('invite_code', '').strip().upper()
 
-        if not group_code:
-            messages.error(request, "Please enter a group code.")
+        if not input_code:
+            messages.error(request, "Please enter an invite code.")
             return redirect('groups:dashboard')
 
         try:
-            group = Group.objects.get(id=group_code)
-        except Group.DoesNotExist:
-            messages.error(request, "Group not found with the provided code.")
-            return redirect('groups:dashboard')
-        except ValueError:
-            messages.error(request, "Invalid group code format.")
-            return redirect('groups:dashboard')
+            # ✅ CHANGE: Query by 'invite_code', not 'id'
+            group = Group.objects.get(invite_code=input_code)
+            
+            if request.user in group.members.all():
+                messages.info(request, f"You are already a member of '{group.name}'.")
+                return redirect('groups:group_detail', group_id=group.id)
 
-        if request.user in group.members.all():
-            messages.info(request, f"You are already a member of '{group.name}'.")
+            with transaction.atomic():
+                group.members.add(request.user)
+                # Keep your existing Supabase sync logic here...
+                
+            messages.success(request, f"Successfully joined {group.name}!")
             return redirect('groups:group_detail', group_id=group.id)
 
-        with transaction.atomic():
-            group.members.add(request.user)
+        except Group.DoesNotExist:
+            messages.error(request, f"Invalid invite code: {input_code}")
+            return redirect('groups:dashboard')
 
-            try:
-                updated_member_ids = [str(member.id) for member in group.members.all()]
-                # Supabase `update` operation depends on synchronized Django and Supabase user IDs.
-                response = supabase.table("groups") \
-                    .update({"member_ids": updated_member_ids}) \
-                    .eq("id", str(group.id)) \
-                    .execute()
-
-                if response.data:
-                    messages.success(request, f"Successfully joined '{group.name}'!")
-                else:
-                    messages.warning(request, f"Joined group in Django, but failed to sync members with Supabase. Error: {response.error.message}")
-                    raise Exception("Supabase group members sync failed")
-
-            except Exception as e:
-                messages.error(request, f"An error occurred while joining group and syncing with Supabase: {e}")
-                raise
-
-        return redirect('groups:group_detail', group_id=group.id)
-    else:
-        return redirect('groups:dashboard')
+    return redirect('groups:dashboard')
 
 @login_required
 def leave_group_view(request, group_id):
@@ -537,3 +513,19 @@ def share_group_link_view(request, group_id):
         'group': group,
     }
     return render(request, 'groups/link_sharing.html', context)
+
+
+@login_required
+def update_budget(request, group_id):
+    if request.method == 'POST':
+        group = get_object_or_404(Group, id=group_id)
+        
+        # Ensure only the creator/admin can change the budget
+        if request.user == group.created_by:
+            new_budget = request.POST.get('budget')
+            if new_budget is not None:
+                group.budget = new_budget
+                group.save()
+        
+        return redirect('groups:group_detail', group_id=group.id)
+    return redirect('groups:dashboard')
