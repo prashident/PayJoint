@@ -55,7 +55,7 @@ def add_expense_view(request, group_id):
     
     # ALWAYS redirect back to the Detail page, never render a separate page
     return redirect('groups:group_detail', group_id=group.id)
-    
+
 @login_required
 def delete_expense(request, expense_id):
     if request.method == 'POST':
@@ -89,4 +89,37 @@ def settle_expense_part(request, expense_id):
                 messages.success(request, "Your share is marked as paid!")
         
         return redirect('groups:group_detail', group_id=expense.group.id)
+    return redirect('groups:dashboard')
+
+
+@login_required
+def add_dashboard_expense(request):
+    if request.method == 'POST':
+        group_id = request.POST.get('group')
+        amount = request.POST.get('amount')
+        description = request.POST.get('description')
+        category = request.POST.get('category', 'Misc')
+
+        # 1. Get the group and verify the user belongs to it
+        group = get_object_or_404(Group, id=group_id)
+        if request.user not in group.members.all():
+            messages.error(request, "You aren't a member of that group!")
+            return redirect('groups:dashboard')
+
+        # 2. Create the expense
+        expense = Expense.objects.create(
+            group=group,
+            paid_by=request.user,
+            amount=amount,
+            description=description,
+            category=category
+        )
+
+        # 3. Default Split: Automatically include all group members
+        expense.participants.set(group.members.all())
+        expense.save()
+
+        messages.success(request, f"₹{amount} added to {group.name} successfully!")
+        return redirect('groups:dashboard')
+    
     return redirect('groups:dashboard')
