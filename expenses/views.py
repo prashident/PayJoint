@@ -91,6 +91,21 @@ def settle_expense_part(request, expense_id):
         return redirect('groups:group_detail', group_id=expense.group.id)
     return redirect('groups:dashboard')
 
+@login_required
+def bulk_unsettle_group(request, invite_code):
+    group = get_object_or_404(Group, invite_code=invite_code)
+    
+    # Find expenses where you have already settled
+    settled_expenses = group.expenses.filter(settled_by=request.user)
+
+    if settled_expenses.exists():
+        for expense in settled_expenses:
+            expense.settled_by.remove(request.user)
+        messages.info(request, f"All your expenses in {group.name} are now marked as unsettled.")
+    else:
+        messages.info(request, "You have no settled expenses to reset!")
+
+    return redirect('groups:group_detail', group_id=group.id)
 
 @login_required
 def add_dashboard_expense(request):

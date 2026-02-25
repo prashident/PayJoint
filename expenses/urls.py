@@ -10,6 +10,7 @@ urlpatterns = [
     path('settle-split/<uuid:expense_id>/', views.settle_expense_part, name='settle_split'),
     path('add/dashboard/', views.add_dashboard_expense, name='add_dashboard_expense'),
     # Change from uuid to str to accept the shorter code
-path('group/<str:invite_code>/settle-all/', views.bulk_settle_group, name='bulk_settle_group'),
+    path('group/<str:invite_code>/settle-all/', views.bulk_settle_group, name='bulk_settle_group'),
+    path('bulk-unsettle/<str:invite_code>/', views.bulk_unsettle_group, name='bulk_unsettle_group'),
     # You might add paths for edit_expense, delete_expense later
 ]
