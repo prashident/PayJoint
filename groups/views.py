@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Sum, Q
 from decimal import Decimal
+from .utils import get_smart_insight
 
 # Import models and forms from this app
 from .models import Group, Invitation
@@ -23,29 +24,35 @@ supabase: Client = create_client(supabase_url, supabase_key)
 
 @login_required
 def dashboard_view(request):
-    user_groups = request.user.joined_groups.all()
+    # Optimization: Prefetch members and expenses to prevent slow loading
+    user_groups = request.user.joined_groups.prefetch_related('members')
 
     total_owed_to_user = Decimal('0.00')
     total_user_owes = Decimal('0.00')
     groups_with_details = []
 
     for group in user_groups:
-        expenses = Expense.objects.filter(group=group)
+        # Optimization: Prefetch participants and settled_by
+        expenses = Expense.objects.filter(group=group).prefetch_related('participants', 'settled_by')
         members = group.members.all()
 
-        # 1. Calculate Group Balances
         balances_in_group = {member.id: Decimal(0) for member in members}
-        for expense in expenses:
-            payer_id = expense.paid_by.id
-            amount = expense.amount
-            balances_in_group[payer_id] += amount
-
-            if expense.participants.exists():
-                count = expense.participants.count()
-                share = amount / Decimal(count)
-                for participant in expense.participants.all():
-                    balances_in_group[participant.id] -= share
         
+        for expense in expenses:
+            if not expense.participants.exists():
+                continue
+                
+            share = expense.amount / Decimal(expense.participants.count())
+            payer = expense.paid_by
+            settled_member_ids = set(expense.settled_by.values_list('id', flat=True))
+
+            for participant in expense.participants.all():
+                # ONLY calculate balance if the participant hasn't settled yet
+                if participant.id not in settled_member_ids:
+                    if participant != payer:
+                        balances_in_group[participant.id] -= share
+                        balances_in_group[payer.id] += share
+
         user_balance_in_this_group = balances_in_group.get(request.user.id, Decimal(0))
         
         # 2. Update Global Totals
@@ -89,8 +96,11 @@ def dashboard_view(request):
         Q(paid_by=request.user) | Q(participants=request.user)
     ).distinct().order_by('-created_at')[:6]
 
+    smart_insight = get_smart_insight(request.user, groups_with_details)
+
     context = {
         'groups_with_details': groups_with_details,
+        'smart_insight': smart_insight,
         'total_owed_to_user': total_owed_to_user.quantize(Decimal('0.01')),
         'total_user_owes': total_user_owes.quantize(Decimal('0.01')),
         'net_balance': net_balance.quantize(Decimal('0.01')),
@@ -290,35 +300,44 @@ def edit_group(request, group_id):
 @login_required
 def group_detail_view(request, group_id):
     group = get_object_or_404(Group, id=group_id)
-
     if request.user not in group.members.all():
         messages.error(request, "You are not a member of this group.")
         return redirect('groups:dashboard')
 
-    expenses = Expense.objects.filter(group=group).order_by('-created_at') 
+    # Optimization: prefetch participants and settled_by
+    expenses = Expense.objects.filter(group=group).prefetch_related('participants', 'settled_by').order_by('-created_at')
     members = group.members.all()
 
-    total_spent = group.get_total_expenses_amount() or Decimal(0)
+    # --- DEFINE TOTAL SPENT HERE ---
+    total_spent = group.get_total_expenses_amount() or Decimal('0.00')
     
     # Calculate remaining budget safely
+    remaining_budget = None
     if group.budget and group.budget > 0:
         remaining_budget = group.budget - total_spent
-    else:
-        remaining_budget = None  # Signal to template to show "Total Spent" instead
 
-    # Balance Calculation Logic (Your existing logic is solid)
-    balances = {member.id: Decimal(0) for member in members}
+    # 1. Dynamic Balance Calculation (excluding settled debts)
+    balances = {member.id: Decimal('0.00') for member in members}
     for expense in expenses:
-        balances[expense.paid_by.id] += expense.amount
-        if expense.participants.exists():
-            share = expense.amount / Decimal(expense.participants.count())
-            for participant in expense.participants.all():
-                balances[participant.id] -= share
+        if not expense.participants.exists():
+            continue
+            
+        share = expense.amount / Decimal(expense.participants.count())
+        payer = expense.paid_by
+        settled_ids = set(expense.settled_by.values_list('id', flat=True))
 
-    # Settlement Algorithm (Your existing greedy algorithm)
+        for participant in expense.participants.all():
+            # If the specific split for this participant isn't settled
+            if participant.id not in settled_ids:
+                if participant != payer:
+                    balances[participant.id] -= share
+                    balances[payer.id] += share
+
+    # 2. Settlement Algorithm
     settlements = []
-    pos_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] > 0], key=lambda x: x['bal'], reverse=True)
-    neg_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] < 0], key=lambda x: x['bal'])
+    # Convert dict to lists for the greedy algorithm
+    pos_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] > Decimal('0.01')], key=lambda x: x['bal'], reverse=True)
+    neg_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] < Decimal('-0.01')], key=lambda x: x['bal'])
 
     i, j = 0, 0
     while i < len(neg_balances) and j < len(pos_balances):
@@ -327,26 +346,26 @@ def group_detail_view(request, group_id):
             settlements.append({
                 'from_user': neg_balances[i]['user'],
                 'to_user': pos_balances[j]['user'],
-                'amount': amount.quantize(Decimal('1')) # Round for clean UI
+                'amount': amount.quantize(Decimal('1')) # Clean UI rounding
             })
         neg_balances[i]['bal'] += amount
         pos_balances[j]['bal'] -= amount
         if abs(neg_balances[i]['bal']) < Decimal('0.01'): i += 1
         if abs(pos_balances[j]['bal']) < Decimal('0.01'): j += 1
     
-    current_user_balance = balances.get(request.user.id, Decimal(0)).quantize(Decimal('0.01'))
+    current_user_balance = balances.get(request.user.id, Decimal('0.00')).quantize(Decimal('0.01'))
 
     context = {
         'group': group,
         'expenses': expenses,
         'members': members,
         'settlements': settlements,
-        'total_spent': total_spent,
+        'total_spent': total_spent, # This was missing!
         'remaining_budget': remaining_budget,
         'current_user_balance': current_user_balance,
     }
     return render(request, 'groups/group_detail.html', context)
-
+    
 @login_required
 def accept_invitation_view(request, invitation_id):
     invitation = get_object_or_404(Invitation, id=invitation_id)
@@ -449,39 +468,42 @@ def delete_group_view(request, group_id):
         messages.error(request, "You are not authorized to delete this group.")
         return redirect('groups:group_detail', group_id=group.id)
 
+    # 1. NEW DYNAMIC BALANCE CHECK (Checks only UNSETTLED debts)
+    expenses = Expense.objects.filter(group=group).prefetch_related('participants', 'settled_by')
     members = group.members.all()
-    # Now importing Expense from expenses.models explicitly
-    expenses = Expense.objects.filter(group=group)
+    balances = {member.id: Decimal('0.00') for member in members}
 
-    balances = {member.id: 0 for member in members}
     for expense in expenses:
-        payer_id = expense.paid_by.id
-        amount = expense.amount
-        balances[payer_id] += amount
-        if expense.participants.exists():
-            share = amount / expense.participants.count()
-            for participant in expense.participants.all():
-                balances[participant.id] -= share
+        if not expense.participants.exists():
+            continue
+            
+        share = expense.amount / Decimal(expense.participants.count())
+        payer = expense.paid_by
+        settled_ids = set(expense.settled_by.values_list('id', flat=True))
 
-    if any(abs(balance) > 0.01 for balance in balances.values()):
+        for participant in expense.participants.all():
+            # ONLY count the debt if the participant HAS NOT settled it yet
+            if participant.id not in settled_ids:
+                if participant != payer:
+                    balances[participant.id] -= share
+                    balances[payer.id] += share
+
+    # Check if ANY unsettled balance remains
+    if any(abs(balance) > Decimal('0.01') for balance in balances.values()):
         messages.error(request, "Cannot delete group: There are outstanding balances. Please settle all expenses first.")
         return redirect('groups:group_detail', group_id=group.id)
 
+    # 2. PROCEED TO DELETE (Your existing logic)
     with transaction.atomic():
         try:
-            # Supabase `delete` operation depends on a synchronized Django and Supabase user IDs.
+            # Sync with Supabase
             supabase_response = supabase.table("groups").delete().eq("id", str(group.id)).execute()
-
-            if not supabase_response.data:
-                 messages.warning(request, f"Group deleted in Django, but failed to delete from Supabase. Error: {supabase_response.error.message}")
-                 raise Exception("Supabase group deletion failed")
-
+            
             group_name = group.name
             group.delete()
-            messages.success(request, f"Group '{group_name}' and all its associated data have been successfully deleted.")
-
+            messages.success(request, f"Group '{group_name}' has been successfully deleted.")
         except Exception as e:
-            messages.error(request, f"An error occurred during group deletion: {e}")
+            messages.error(request, f"An error occurred: {e}")
             raise
 
     return redirect('groups:dashboard')

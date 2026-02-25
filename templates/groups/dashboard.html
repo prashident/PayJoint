@@ -44,7 +44,7 @@
 <div class="flex items-center gap-6">
     <div class="hidden lg:flex flex-col items-end justify-center">
         <span class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Welcome back,</span>
-        <span class="text-sm font-bold text-white tracking-tight">{{ user.username }}</span>
+        <span class="text-sm font-bold text-white tracking-tight">{{ user.get_full_name|default:user.username }}</span>
     </div>
 
     <a href="{% url 'users:profile_detail' %}" class="group relative hidden lg:block">
@@ -129,8 +129,39 @@
                         {% endif %}
                     </a>
                     {% endfor %}
+                    <section class="glass-panel rounded-[2rem] p-8 relative overflow-hidden group">
+                        <div
+                            class="absolute -right-10 -top-10 w-32 h-32 bg-yellow-400/5 rounded-full blur-3xl group-hover:bg-yellow-400/10 transition-all duration-700">
+                        </div>
+
+                        <div class="flex items-start gap-6">
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-slate-900/50 border border-white/5 flex items-center justify-center text-2xl shadow-inner">
+                                {{ smart_insight.icon }}
+                            </div>
+
+                            <div class="flex-grow space-y-1">
+                                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Smart
+                                    Insight</h4>
+                                <p class="text-white font-bold text-lg leading-snug max-w-md">
+                                    {{ smart_insight.message }}
+                                </p>
+                            </div>
+
+                            {% if smart_insight.action_url %}
+                            <div class="flex items-center">
+                                <a href="{% if smart_insight.group_id %}{% url smart_insight.action_url group_id=smart_insight.group_id %}{% else %}{% url smart_insight.action_url %}{% endif %}"
+                                    class="px-5 py-2.5 rounded-xl bg-yellow-400 text-slate-900 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-300 transition-all active:scale-95 shadow-lg shadow-yellow-400/10">
+                                    {{ smart_insight.action_text }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </section>
                 </div>
             </div>
+
+
 
             <div id="tab-home" class="tab-content lg:col-span-4 lg:block space-y-8">
                 <section class="glass-panel rounded-[2rem] p-8 relative overflow-hidden">
@@ -167,6 +198,8 @@
                     </div>
                 </section>
 
+
+
                 <section class="space-y-6">
                     <div class="flex items-center justify-between px-2">
                         <h3 class="text-sm font-bold text-white uppercase tracking-widest">Activity</h3>
@@ -199,7 +232,9 @@
                         {% endfor %}
                     </div>
                 </section>
+
             </div>
+
         </div>
     </main>
 

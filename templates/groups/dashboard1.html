@@ -1,274 +1,313 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Dashboard - PayJoint{% endblock %}
 
 {% block extra_head %}
 <style type="text/tailwindcss">
     :root {
-            --background: #000814;
-            --primary-accent: #001d3d;
-            --secondary-accent: #003566;
-            --highlight: #ffc300;
-            --highlight-hover: #ffd60a;
-            --text-primary: #ffffff;
-            --text-secondary: #adb5bd;
-            --card-hover-shadow: rgba(255, 195, 0, 0.3);
-            --owed-color: #34D399;
-            --owing-color: #EF4444;
-            --neutral-color: #ADB5BD;
-            --budget-low: #34D399;
-            --budget-medium: #FBBF24;
-            --budget-high: #EF4444;
-        }
-        body {
-            background-color: var(--background);
-            font-family: 'Roboto', sans-serif;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Montserrat', sans-serif;
-        }
-        .group-card {
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .group-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px var(--card-hover-shadow);
-        }
-        /* Style for the floating join group input popover */
-        #join-group-popover {
-            position: fixed;
-            bottom: 120px;
-            right: 8px;
-            background-color: var(--primary-accent);
-            border: 1px solid var(--secondary-accent);
-            border-radius: 12px;
-            padding: 1rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            z-index: 50;
-            width: 280px;
-        }
-    </style>
+        --bg-deep: #0f172a;
+        --bg-charcoal: #1e293b;
+        --accent-yellow: #FACC15;
+        --text-primary: #F8FAFC;
+    }
+    
+    body {
+        background: radial-gradient(circle at top left, #1e293b 0%, #0f172a 100%);
+        color: var(--text-primary);
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    .glass-panel {
+        @apply bg-slate-800/40 backdrop-blur-xl border border-white/5 shadow-xl;
+    }
+    
+    .glass-card {
+        @apply bg-slate-700/30 backdrop-blur-md border border-white/5 transition-all duration-300;
+    }
+
+    /* Activity Feed Fade Effect */
+    #activity-feed {
+        mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    }
+
+    /* Tab Transition Logic */
+    @media (max-width: 1023px) {
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    }
+</style>
 {% endblock %}
 
 {% block optional_header_content %}
+<div class="flex items-center gap-6">
+    <div class="hidden lg:flex flex-col items-end justify-center">
+        <span class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Welcome back,</span>
+        <span class="text-sm font-bold text-white tracking-tight">{{ user.get_full_name|default:user.username }}</span>
+    </div>
+
+    <a href="{% url 'users:profile_detail' %}" class="group relative hidden lg:block">
+        <div
+            class="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border border-slate-500 flex items-center justify-center text-sm font-medium text-white ring-2 ring-transparent group-hover:ring-yellow-400/50 transition-all overflow-hidden shadow-lg shadow-black/20">
+            {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}" alt="User" class="w-full h-full object-cover">
+            {% else %}
+            <span class="text-slate-900 text-lg font-black">{{ user.username.0|upper }}</span>
+            {% endif %}
+        </div>
+    </a>
+</div>
 {% endblock optional_header_content %}
 
 {% block content %}
-<div class="flex flex-col min-h-screen">
-    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
-            <h2 class="text-4xl font-bold text-[var(--text-primary)]">Dashboard</h2>
-            <div class="flex items-center gap-6">
-                {# Profile Button #}
-                <a href="{% url 'users:profile_detail' %}"
-                    class="block w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--highlight)] flex-shrink-0">
-                    <img src="https://via.placeholder.com/40/003566/FFFFFF?text=P" alt="Profile"
-                        class="w-full h-full object-cover">
-                </a>
-            </div>
+<div class="min-h-screen pb-32 pt-1">
+    <main class="px-6 max-w-[1440px] mx-auto mt-4">
+        <div class="mb-10 hidden lg:block">
+            <h1 class="text-3xl font-black text-white mb-2 tracking-tighter">Dashboard</h1>
+            <p class="text-slate-400 text-base font-medium">Manage your shared lifestyle</p>
         </div>
 
-        {# My Finances Section #}
-        <div class="bg-[var(--primary-accent)] rounded-2xl shadow-lg p-6 mb-8 border border-[var(--secondary-accent)]">
-            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-4">My Finances Overview</h3>
-            <div class="flex flex-col sm:flex-row justify-around items-center gap-6">
-                <div class="text-center">
-                    <p class="text-[var(--text-secondary)] text-sm">Total You Are Owed</p>
-                    <p class="text-4xl font-bold text-[var(--owed-color)] mt-2">₹{{ total_owed_to_user }}</p>
-                    <p class="text-[var(--text-secondary)] text-xs">(Across all groups)</p>
-                </div>
-                <div class="text-center">
-                    <p class="text-[var(--text-secondary)] text-sm">Total You Owe</p>
-                    <p class="text-4xl font-bold text-[var(--owing-color)] mt-2">₹{{ total_user_owes }}</p>
-                    <p class="text-[var(--text-secondary)] text-xs">(Across all groups)</p>
-                </div>
-            </div>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-
-        <h3 class="text-3xl font-bold text-[var(--text-primary)] mb-6">My Groups</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% if groups_with_details %}
-            {% for item in groups_with_details %}
-            {% with group=item.group %}
-            <a href="{% url 'groups:group_detail' group.id %}" class="block group">
-                <div class="bg-[var(--primary-accent)] rounded-2xl overflow-hidden group-card">
-                    {% if group.image %}
-                    <img class="h-48 w-full object-cover" src="{{ group.image.url }}" alt="{{ group.name }} Image">
-                    {% else %}
-                    <div class="h-48 w-full bg-cover bg-center flex items-center justify-center text-[var(--text-primary)] text-2xl font-semibold"
-                        style='background-color: var(--secondary-accent);'>
-                        No Image
+            <div id="tab-groups" class="tab-content active lg:col-span-8 lg:block space-y-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-white tracking-tight">My Groups</h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="document.getElementById('join-group-modal').classList.remove('hidden')"
+                            class="px-4 py-2 rounded-xl bg-slate-800 border border-white/5 text-slate-300 text-xs font-bold hover:text-white transition-all">
+                            Join Group
+                        </button>
+                        <a href="{% url 'groups:create_group' %}"
+                            class="px-4 py-2 rounded-xl bg-yellow-400 text-slate-900 text-xs font-black hover:bg-yellow-300 transition-all">
+                            + Create New
+                        </a>
                     </div>
-                    {% endif %}
-                    <div class="p-6">
-                        <div class="flex items-center gap-2 mb-2">
-                            {% if group.group_type == 'Trip' %}
-                            <svg class="w-5 h-5 text-[var(--highlight)]" fill="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M19 6H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 9h-2v2h-2v-2h-2v2H9v-2H7v2H5V8h14v7zM12 9c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z" />
-                            </svg>
-                            {% elif group.group_type == 'Home' %}
-                            <svg class="w-5 h-5 text-[var(--highlight)]" fill="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M12 5.69L17 10.19V18h-2v-6H9v6H7v-7.81L12 5.69zM12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
-                            </svg>
-                            {% else %}
-                            <svg class="w-5 h-5 text-[var(--highlight)]" fill="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
-                            </svg>
-                            {% endif %}
-                            <h3 class="text-xl font-bold text-[var(--text-primary)]">{{ group.name }}</h3>
-                        </div>
-                        <p class="text-[var(--text-secondary)] text-sm mb-4">{{ group.description|truncatechars:70 }}
-                        </p>
+                </div>
 
-                        {% if item.budget_limit is not None %}
-                        <div class="flex items-center gap-2 mb-4">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-[var(--background)]"
-                                style="background-color:
-                                         {% if item.budget_percentage_spent <= 50 %}
-                                            var(--budget-low)
-                                         {% elif item.budget_percentage_spent > 50 and item.budget_percentage_spent <= 90 %}
-                                            var(--budget-medium)
-                                         {% else %}
-                                            var(--budget-high)
-                                         {% endif %};">
-                                {{ item.budget_percentage_spent|floatformat:"0" }}%
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for item in groups_with_details %}
+                    <a href="{% url 'groups:group_detail' item.group.id %}"
+                        class="block glass-panel p-6 rounded-[2rem] group hover:border-yellow-400/30 transition-all">
+                        <div class="flex items-start justify-between mb-6">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="w-14 h-14 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center overflow-hidden">
+                                    {% if item.group.image %}
+                                    <img src="{{ item.group.image.url }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                    <span class="text-xl font-black text-yellow-400">{{ item.group.name.0|upper}}</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-bold group-hover:text-yellow-400 transition-colors">
+                                        {{item.group.name }}</h4>
+                                    <span
+                                        class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{item.group.group_type}}</span>
+                                </div>
                             </div>
-                            <span class="text-sm text-[var(--text-secondary)]">
-                                Budget Used: ₹{{ item.total_expenses_amount }} / ₹{{ item.budget_limit }}
-                            </span>
+                            <div class="text-right">
+                                <p
+                                    class="text-sm font-black {% if item.user_balance >= 0 %}text-emerald-400{% else %}text-rose-400{% endif %}">
+                                    ₹{{ item.user_balance|floatformat:0|cut:"-" }}
+                                </p>
+                                <p class="text-[8px] font-black text-slate-600 uppercase">Balance</p>
+                            </div>
                         </div>
-                        {% else %}
-                        <p class="text-sm text-[var(--text-secondary)] mb-4">No budget set for this group.</p>
+
+                        {% if item.group.budget > 0 %}
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[9px] font-black uppercase tracking-tighter">
+                                <span class="text-slate-500">Budget Usage</span>
+                                <span class="text-slate-300">{{ item.budget_percent|floatformat:0 }}%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500 {% if item.budget_percent > 90 %}bg-rose-500{% else %}bg-emerald-500{% endif %}"
+                                    style="width: {{ item.budget_percent|default:0 }}%"></div>
+                            </div>
+                        </div>
                         {% endif %}
-
-                        <div class="flex items-center justify-between">
-                            {% if item.user_balance > 0 %}
-                            <span class="font-bold text-[var(--owed-color)]">You are owed ₹{{ item.user_balance
-                                }}</span>
-                            {% elif item.user_balance < 0 %} <span class="font-bold text-[var(--owing-color)]">You owe
-                                ₹{{ item.user_balance|floatformat:2|cut:"-" }}</span>
-                                {% else %}
-                                <span class="font-bold text-[var(--neutral-color)]">Balances settled</span>
-                                {% endif %}
-
-                                <span class="flex items-center gap-1 text-sm text-[var(--text-secondary)]">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd"
-                                            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd">
-                                        </path>
-                                    </svg>
-                                    {{ group.members.count }}
-                                </span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-            {% endwith %}
-            {% endfor %}
-            {% else %}
-            <div
-                class="col-span-full bg-[var(--primary-accent)] rounded-2xl shadow-lg p-8 text-center border border-[var(--secondary-accent)]">
-                <p class="text-[var(--text-secondary)] text-lg mb-4">You haven't joined or created any groups yet.</p>
-                <p class="text-[var(--text-primary)] text-xl font-semibold">Start by creating your first group or join
-                    an existing one!</p>
-                <div class="mt-6 flex justify-center gap-4">
-                    <a href="{% url 'groups:create_group' %}"
-                        class="bg-[var(--highlight)] hover:bg-[var(--highlight-hover)] text-[var(--background)] font-bold py-3 px-6 rounded-lg shadow-md transition-transform duration-300 transform hover:scale-105">
-                        Create New Group
                     </a>
-                    <button onclick="focusGroupCodeInput()"
-                        class="border border-[var(--highlight)] text-[var(--highlight)] hover:bg-[var(--highlight)] hover:text-[var(--background)] font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-300">
-                        Join with Code
-                    </button>
+                    {% endfor %}
                 </div>
             </div>
-            {% endif %}
-        </div>
 
-        {# Floating Action Button for Join Group #}
-        <div id="join-group-popover" class="hidden">
-            <form method="post" action="{% url 'groups:join_group_by_code' %}" class="flex flex-col gap-3">
-                {% csrf_token %}
-                <h4 class="text-lg font-bold text-[var(--text-primary)]">Join Group</h4>
-                <input type="text" name="group_code" placeholder="Enter group code (UUID)"
-                    class="w-full px-4 py-3 bg-[var(--background)] border border-[var(--secondary-accent)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight)] transition-shadow duration-300"
-                    required>
-                <button type="submit"
-                    class="bg-[var(--highlight)] hover:bg-[var(--highlight-hover)] text-[var(--background)] font-bold py-2 px-4 rounded-lg shadow-md transition-transform duration-300 transform hover:scale-105 w-full">
-                    Join
-                </button>
-                <button type="button" id="close-join-popover"
-                    class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] mt-1">Close</button>
-            </form>
-        </div>
+            <div id="tab-home" class="tab-content lg:col-span-4 lg:block space-y-8">
+                <section class="glass-panel rounded-[2rem] p-8 relative overflow-hidden">
+                    <div
+                        class="absolute -top-12 -right-12 w-32 h-32 bg-yellow-400/10 rounded-full blur-2xl pointer-events-none">
+                    </div>
 
-        <div class="fixed bottom-8 right-8 flex flex-col gap-4 z-40">
-            <button id="join-group-fab"
-                class="bg-[var(--secondary-accent)] hover:bg-[var(--royal-blue)] text-[var(--text-primary)] font-bold py-4 px-6 rounded-full shadow-lg flex items-center gap-2 transition-transform duration-300 transform hover:scale-105">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z">
-                    </path>
-                </svg>
-                <span>Join Group</span>
-            </button>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Net
+                                Balance</p>
+                            <h2 class="text-3xl font-black tracking-tight">
+                                {% if net_balance > 0 %}<span
+                                    class="text-emerald-400">+₹{{net_balance|floatformat:0}}</span>
+                                {% elif net_balance < 0 %}<span class="text-rose-400">
+                                    -₹{{net_balance|floatformat:0|cut:"-" }}</span>
+                                    {% else %}<span class="text-slate-200">₹0</span>{% endif %}
+                            </h2>
+                        </div>
 
-            <a href="{% url 'groups:create_group' %}">
-                <button
-                    class="bg-[var(--highlight)] hover:bg-[var(--highlight-hover)] text-[var(--background)] font-bold py-4 px-6 rounded-full shadow-lg flex items-center gap-2 transition-transform duration-300 transform hover:scale-105">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path clip-rule="evenodd"
-                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                            fill-rule="evenodd"></path>
-                    </svg>
-                    <span>Create Group</span>
-                </button>
-            </a>
+                        <div class="grid grid-cols-2 gap-4 pt-6 border-t border-white/5">
+                            <div>
+                                <p class="text-slate-500 text-[9px] font-black uppercase tracking-wider">You Owe</p>
+                                <p class="text-lg font-bold text-rose-400/90">
+                                    ₹{{total_user_owes|default:"0"|floatformat:0 }}</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-500 text-[9px] font-black uppercase tracking-wider">You Are Owed
+                                </p>
+                                <p class="text-lg font-bold text-emerald-400/90">
+                                    ₹{{total_owed_to_user|default:"0"|floatformat:0 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-6">
+                    <div class="flex items-center justify-between px-2">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-widest">Activity</h3>
+                        <button onclick="document.getElementById('add-expense-modal').classList.remove('hidden')"
+                            class="text-[10px] font-black text-yellow-400 hover:text-white transition-colors uppercase tracking-widest">
+                            + Add Expense
+                        </button>
+                    </div>
+
+                    <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar" id="activity-feed">
+                        {% for activity in recent_activities %}
+                        <div class="glass-card rounded-2xl p-4 border border-white/5 group cursor-pointer">
+                            <div class="flex justify-between items-start mb-1">
+                                <p
+                                    class="text-xs font-bold text-white group-hover:text-yellow-400 transition-colors truncate pr-2">
+                                    {{ activity.description }}</p>
+                                <p class="text-xs font-black text-white whitespace-nowrap">
+                                    ₹{{activity.amount|floatformat:0 }}</p>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <p class="text-[9px] font-bold text-slate-500 uppercase">{{ activity.group.name }}</p>
+                                <p
+                                    class="text-[8px] font-black {% if activity.paid_by == request.user %}text-emerald-500{% else %}text-blue-500{% endif %} uppercase tracking-widest">
+                                    {% if activity.paid_by == request.user %}Paid By You{% else %}Involved{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-center py-10 text-[10px] font-bold text-slate-600 uppercase">No Activity Yet</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
         </div>
     </main>
+
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-    // Join Group Popover Logic
-    const joinGroupFab = document.getElementById('join-group-fab');
-    const joinGroupPopover = document.getElementById('join-group-popover');
-    const closeJoinPopoverBtn = document.getElementById('close-join-popover');
+<div id="join-group-modal"
+    class="hidden fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
 
-    if (joinGroupFab && joinGroupPopover && closeJoinPopoverBtn) {
-        joinGroupFab.addEventListener('click', function () {
-            joinGroupPopover.classList.toggle('hidden');
-            if (!joinGroupPopover.classList.contains('hidden')) {
-                joinGroupPopover.querySelector('input[name="group_code"]').focus();
-            }
-        });
+    <div
+        class="glass-panel w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in duration-200">
 
-        closeJoinPopoverBtn.addEventListener('click', function () {
-            joinGroupPopover.classList.add('hidden');
-        });
+        <div class="p-8 pb-0 flex justify-between items-center">
+            <div>
+                <h3 class="text-xl font-black text-white tracking-tighter">Join a Group</h3>
+                <p class="text-[10px] font-black text-yellow-400 uppercase tracking-widest mt-1">Enter Invite Code</p>
+            </div>
+            <button type="button" onclick="document.getElementById('join-group-modal').classList.add('hidden')"
+                class="text-slate-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
 
-        document.addEventListener('click', function (e) {
-            if (!joinGroupFab.contains(e.target) && !joinGroupPopover.contains(e.target)) {
-                joinGroupPopover.classList.add('hidden');
-            }
-        });
-    }
+        <form method="POST" action="{% url 'groups:join_group' %}" class="p-8 space-y-6">
+            {% csrf_token %}
 
-    function focusGroupCodeInput() {
-        const joinFab = document.getElementById('join-group-fab');
-        if (joinFab) {
-            joinFab.click();
-        }
-    }
-</script>
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Invite Code</label>
+                <input type="text" name="invite_code" placeholder="e.g. 8A2B3C4D" required
+                    class="w-full bg-slate-900 border border-white/5 rounded-2xl px-4 py-4 text-white font-black text-center text-xl tracking-[0.3em] focus:ring-2 focus:ring-yellow-400/50 outline-none uppercase placeholder:text-slate-800">
+                <p class="text-[9px] font-bold text-slate-600 uppercase tracking-tight ml-2">
+                    Codes are case-sensitive. Ask the group admin for their 8-digit ID.
+                </p>
+            </div>
+
+            <div class="flex gap-4">
+                <button type="button" onclick="document.getElementById('join-group-modal').classList.add('hidden')"
+                    class="flex-1 py-4 rounded-2xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-all">
+                    Cancel
+                </button>
+                <button type="submit"
+                    class="flex-1 py-4 rounded-2xl bg-yellow-400 text-slate-900 font-black shadow-xl shadow-yellow-400/20 active:scale-95 transition-all">
+                    Join Group
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="add-expense-modal"
+    class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div
+        class="glass-panel w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in duration-200">
+        <div class="p-8 pb-0 flex justify-between items-center">
+            <h3 class="text-xl font-black text-white tracking-tighter">New Expense</h3>
+            <button onclick="document.getElementById('add-expense-modal').classList.add('hidden')"
+                class="text-slate-500 hover:text-white">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <form action="{% url 'expenses:add_dashboard_expense' %}" method="POST" class="p-8 space-y-6">
+            {% csrf_token %}
+
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Select Group</label>
+                <select name="group" required
+                    class="w-full bg-slate-900 border border-white/5 rounded-2xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 appearance-none">
+                    <option value="" disabled selected>Choose a group...</option>
+                    {% for item in groups_with_details %}
+                    <option value="{{ item.group.id }}">{{ item.group.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Amount</label>
+                    <input type="number" name="amount" step="0.01" required placeholder="0.00"
+                        class="w-full bg-slate-900 border border-white/5 rounded-2xl px-4 py-3 text-white font-black focus:ring-2 focus:ring-yellow-400/50 outline-none">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Category</label>
+                    <select name="category"
+                        class="w-full bg-slate-900 border border-white/5 rounded-2xl px-4 py-3 text-sm font-bold text-white outline-none">
+                        <option value="Misc">Misc</option>
+                        <option value="Meals">Meals</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Stay">Stay</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Description</label>
+                <input type="text" name="description" placeholder="What was this for?" required
+                    class="w-full bg-slate-900 border border-white/5 rounded-2xl px-4 py-3 text-white font-bold focus:ring-2 focus:ring-yellow-400/50 outline-none">
+            </div>
+
+            <button type="submit"
+                class="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-900 font-black py-4 rounded-2xl shadow-xl shadow-yellow-400/20 active:scale-95 transition-all">
+                Add Expense
+            </button>
+        </form>
+    </div>
+</div>
+
 {% endblock %}

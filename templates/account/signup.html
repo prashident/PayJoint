@@ -1,157 +1,168 @@
 {% extends 'base.html' %}
 {% load socialaccount %}
 
-{% block title %}
-    Sign Up - PayJoint
-{% endblock %}
+{% block title %}Sign Up - PayJoint{% endblock %}
 
 {% block extra_head %}
 <style type="text/tailwindcss">
     :root {
         --bg-deep-navy: #000814;
-        --accent-royal-blue-dark: #001d3d;
-        --accent-royal-blue-medium: #003566;
-        --highlight-gold-yellow: #ffc300;
-        --highlight-gold-yellow-darker: #ffd60a;
-        --text-primary: #ffffff;
+        --accent-blue: #003566;
+        --highlight-gold: #ffc300;
         --text-secondary: #a9a9a9;
     }
+
     body {
         background-color: var(--bg-deep-navy);
         font-family: 'Roboto', sans-serif;
+        overflow: hidden;
     }
+
     h1, h2, h3, h4, h5, h6 {
         font-family: 'Montserrat', sans-serif;
     }
-    .login-container::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: conic-gradient(
-            from 0deg at 50% 50%,
-            var(--accent-royal-blue-dark) 0%,
-            var(--accent-royal-blue-medium) 30%,
-            var(--bg-deep-navy) 60%,
-            var(--bg-deep-navy) 100%
+    
+    .animated-gradient-bg {
+        background: linear-gradient(
+            120deg,
+            #000814,
+            #001d3d,
+            #003566,
+            #001d3d,
+            #000814
         );
-        animation: rotate 10s linear infinite;
+        background-size: 400% 400%;
+        animation: gradientShift 18s ease infinite;
     }
-    .page-background::after {
+
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .animated-gradient-bg::after {
         content: '';
         position: absolute;
         inset: 0;
-        background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-        background-size: 2rem 2rem;
-        opacity: 0.5;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-size: 3rem 3rem;
+        opacity: 0.15;
+        pointer-events: none;
     }
-    @keyframes rotate {
-        0% {
-            transform: rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg);
-        }
+    
+    .glass-card {
+        @apply relative z-20 bg-slate-950/40 backdrop-blur-3xl border border-white/5 shadow-2xl;
     }
-    .tab-button.active {
-        color: var(--highlight-gold-yellow);
-        border-bottom-color: var(--highlight-gold-yellow);
-    }
-    .tab-content {
-        display: none;
-    }
-    .tab-content.active {
-        display: block;
-    }
+
     .auth-input-style {
-        @apply w-full px-4 py-3 bg-[var(--accent-royal-blue-dark)] border border-[var(--accent-royal-blue-medium)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--highlight-gold-yellow-darker)] transition-shadow duration-300;
+        @apply w-full px-4 py-2.5 bg-[#001d3d]/50 border border-[#003566] rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ffd60a] transition-all duration-300;
     }
+    
+    [x-cloak] { display: none !important; }
 </style>
 {% endblock %}
 
-{% block optional_header_content %}
-<nav class="hidden items-center gap-8 md:flex">
-    <a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="{% url 'users:index' %}">Home</a>
-    <a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="{% url 'users:index' %}#benefits">Benefits</a>
-    <a class="text-sm font-medium text-[var(--text-light)] transition-colors hover:text-[var(--bright-yellow)]" href="{% url 'users:index' %}#features">Features</a>
-</nav>
-<div class="flex items-center gap-4">
-    {% if user.is_authenticated %}
-        <span class="text-sm font-medium text-[var(--text-light)]">Welcome, {{ user.email }}!</span>
-        <a href="{% url 'groups:dashboard' %}" class="rounded-lg bg-[var(--dark-blue)] px-6 py-2 text-sm font-bold text-[var(--white)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]">
-            Dashboard
-        </a>
-        <a href="{% url 'account_logout' %}" class="rounded-lg bg-transparent px-6 py-2 text-sm font-bold text-[var(--white)] ring-1 ring-inset ring-[var(--royal-blue)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]">
-            Log Out
-        </a>
-    {% else %}
-        <a href="{% url 'account_login' %}" class="rounded-lg bg-transparent px-6 py-2 text-sm font-bold text-[var(--white)] ring-1 ring-inset ring-[var(--royal-blue)] transition-transform hover:scale-105 hover:bg-[var(--royal-blue)]">
-            Log in
-        </a>
-    {% endif %}
-</div>
-{% endblock %}
-
 {% block content %}
-<div class="relative min-h-screen flex items-center justify-center p-4 overflow-hidden page-background">
-    <div class="login-container relative max-w-md w-full">
-        <div class="relative bg-[var(--bg-deep-navy)] rounded-2xl p-8 z-10">
-            <div class="text-center mb-8">
+<div class="relative h-screen flex items-center justify-center p-4 overflow-hidden animated-gradient-bg"
+    x-data="{ showPass: false }">
+
+    <div class="relative max-w-md w-full">
+        <div class="glass-card rounded-[2.5rem] p-6 md:p-8 border border-white/10">
+
+            <div class="text-center mb-6">
                 <div class="flex justify-center items-center mb-4">
-                    <div class="w-16 h-16 bg-[var(--accent-royal-blue-medium)] rounded-full flex items-center justify-center">
-                        <span class="text-2xl font-bold text-[var(--highlight-gold-yellow)]">PJ</span>
+                    <div
+                        class="w-14 h-14 bg-[#003566] rounded-2xl flex items-center justify-center shadow-2xl border border-white/10">
+                        <svg class="w-7 h-7 text-[#ffc300]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                        </svg>
                     </div>
                 </div>
-                <h1 class="text-3xl font-bold text-white mb-2">Join PayJoint,</h1>
-                <h2 class="text-3xl font-bold text-[var(--highlight-gold-yellow)]">Start Splitting Bills!</h2>
+                <h1 class="text-2xl font-black text-white tracking-tight">Join PayJoint,</h1>
+                <h2 class="text-2xl font-black text-[#ffc300] tracking-tight text-sm uppercase tracking-widest mt-1">
+                    Start Splitting Bills!</h2>
             </div>
-            <div class="mb-8">
-                <div class="flex border-b border-b-[var(--accent-royal-blue-medium)]">
-                    <a href="{% url 'account_login' %}" class="tab-button flex-1 py-3 text-lg font-bold text-[var(--text-secondary)] border-b-2 border-transparent hover:text-white transition-colors duration-300" id="login-tab-button">Login</a>
-                    <a href="{% url 'account_signup' %}" class="tab-button flex-1 py-3 text-lg font-bold text-[var(--text-secondary)] border-b-2 border-transparent hover:text-white transition-colors duration-300 active" id="signup-tab-button">Sign Up</a>
+
+            <div class="mb-6">
+                <div class="flex border-b border-white/5">
+                    <a href="{% url 'account_login' %}"
+                        class="flex-1 py-2 text-center text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Login</a>
+                    <a href="{% url 'account_signup' %}"
+                        class="flex-1 py-2 text-center text-xs font-black uppercase tracking-widest text-[#ffc300] border-b-2 border-[#ffc300]">Sign
+                        Up</a>
                 </div>
             </div>
 
-            <div class="tab-content active" id="signup-tab">
-                <form method="post" action="{% url 'account_signup' %}" class="space-y-6">
-                    {% csrf_token %}
-                    
-                    {# Corrected Form Rendering #}
-                    {% for field in form %}
-                        <div>
-                            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {% if field.field.widget.input_type == 'checkbox' %}
-                                {{ field }}
-                            {% else %}
-                                <input type="{{ field.field.widget.input_type }}" 
-                                       name="{{ field.name }}" 
-                                       id="{{ field.id_for_label }}" 
-                                       class="auth-input-style" 
-                                       placeholder="{{ field.label }}" 
-                                       value="{{ field.value|default:'' }}" 
-                                       {% if field.field.required %}required{% endif %}>
-                            {% endif %}
-                            {% for error in field.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
-                        </div>
-                    {% endfor %}
-                    
-                    {% if form.non_field_errors %}
-                        <div class="text-red-500 text-sm mb-4">
-                            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-                        </div>
-                    {% endif %}
-                    <button class="w-full bg-[var(--highlight-gold-yellow)] text-[var(--bg-deep-navy)] font-bold py-3 px-4 rounded-lg hover:bg-[var(--highlight-gold-yellow-darker)] transition-colors duration-300 transform hover:scale-105 shadow-lg shadow-[var(--highlight-gold-yellow)]/20" type="submit">Create Account</button>
-                </form>
-            </div>
+            <form method="post" action="{% url 'account_signup' %}" class="space-y-3.5">
+                {% csrf_token %}
 
-            <div class="mt-12 text-center text-xs text-[var(--text-secondary)]">
-                <p class="mb-2">By continuing, you agree to our</p>
-                <div class="flex justify-center space-x-4">
-                    <a class="hover:text-white hover:underline underline-offset-4 transition-colors duration-300" href="#">Terms of Service</a>
-                    <span class="text-gray-500">|</span>
-                    <a class="hover:text-white hover:underline underline-offset-4 transition-colors duration-300" href="#">Privacy Policy</a>
+                {% if form.non_field_errors %}
+                <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-4">
+                    {% for error in form.non_field_errors %}
+                    <p class="text-rose-500 text-[10px] font-black uppercase tracking-wider text-center">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% for field in form %}
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1"
+                        for="{{ field.id_for_label }}">
+                        {% if field.label == "Password (again)" %}Confirm Password{% else %}{{ field.label }}{% endif %}
+                    </label>
+
+                    <div class="relative">
+                        <input {% if 'password' in field.name %}:type="showPass ? 'text' : 'password'" {% else
+                            %}type="{{ field.field.widget.input_type }}" {% endif %} name="{{ field.name }}"
+                            id="{{ field.id_for_label }}"
+                            class="auth-input-style {% if 'password' in field.name %}pr-12{% endif %}"
+                            value="{{ field.value|default:'' }}" {% if field.field.required %}required{% endif %}>
+
+                        {% if 'password' in field.name %}
+                        <button type="button" @click="showPass = !showPass"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#ffc300] transition-colors focus:outline-none">
+                            <svg x-show="!showPass" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg x-show="showPass" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                x-cloak>
+                                <path stroke-width="2"
+                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.274 0 2.44.207 3.538.588M21 21l-6.75-6.75M12 9a3 3 0 00-3 3c0 .166.013.33.039.49M12 15a3 3 0 01-3-3m9-3a9 9 0 01-2.59 1.41M12 9c1.657 0 3 1.343 3 3 0 .166-.013.33-.039.49M21 12c-1.274 4.057-5.064 7-9.542 7-1.274 0-2.44-.207-3.538-.588" />
+                            </svg>
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    {% for error in field.errors %}
+                    <p class="text-rose-500 text-[10px] font-bold uppercase tracking-wider ml-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+
+                <button
+                    class="w-full bg-[#ffc300] text-[#000814] font-black py-4 rounded-xl hover:bg-[#ffd60a] transition-all active:scale-95 shadow-xl shadow-yellow-500/10 uppercase tracking-[0.2em] text-xs mt-3"
+                    type="submit">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-[9px] text-gray-500 uppercase tracking-widest leading-loose">
+                    By continuing, you agree to our<br>
+                    <a href="#" class="text-white hover:text-[#ffc300] transition-colors">Terms of Service</a>
+                    <span class="mx-2 opacity-20">|</span>
+                    <a href="#" class="hover:text-[#ffc300] text-white transition-colors">Privacy Policy</a>
+                </p>
+                <div class="mt-4 pt-4 border-t border-white/5">
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                        Already have an account?
+                        <a href="{% url 'account_login' %}" class="text-[#ffc300] font-black hover:underline">Login</a>
+                    </p>
                 </div>
             </div>
         </div>
@@ -160,7 +171,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    // The original JS for tab switching is now handled by Django's URL routing.
-</script>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 {% endblock %}

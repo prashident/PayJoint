@@ -1,0 +1,73 @@
+everyone's talking about clawdbot. twitter's going crazy. people posting screenshots of their bots clearing inboxes, scheduling meetings, researching companies while they sleep.
+and you're sitting there wondering if you missed the window.
+you didn't. here's how to set it up before the hype dies down and you forget.
+what clawdbot actually is
+clawdbot is an open-source AI assistant that runs 24/7 on a server. you talk to it through whatsapp or telegram. it does actual work. clears your inbox. schedules meetings. researches companies. follows up with leads. writes content. manages your calendar.
+one guy has his hooked up to github, google drive, and gmail. he tells it "analyze my site, write a blog post, update my metadata, then draft a linkedin post." it does all of it. by voice. while he does other things.
+another guy has it check him into flights, monitor stock prices, and send alerts when something needs attention.
+most AI tools answer questions. clawdbot does work.
+why most people won't set this up
+they think it's technical. terminal commands. servers. API keys.
+sounds intimidating. feels like you need to be a developer.
+you don't.
+the whole setup is copy-paste. the wizard walks you through everything. if you get stuck, screenshot where you are and send it to chatgpt. ask "i'm trying to set up clawdbot and i'm stuck here. what do i do?" it tells you exactly what buttons to press.
+that's what non-technical people do. works every time.
+you're not learning to code. you're learning to manage an AI that works for you 24/7.
+the 30-minute setup
+step 1: get a free server (5 min)
+clawdbot needs to run somewhere 24/7. AWS free tier works.
+go to aws.amazon.com
+. create account. search "EC2". click "launch instance". name it anything. select ubuntu. search "free" for instance type, pick the 8gb option. launch. click your instance ID. click connect twice.
+you're in a terminal. looks scary. it's not.
+step 2: install clawdbot (2 min)
+paste this one line:
+curl -fsSL https://clawd.bot/install.sh
+ | bash
+wait 2 minutes. that's the only command. everything else is clicking through a wizard.
+step 3: run the wizard (10 min)
+wizard starts automatically. select "quick start". choose "anthropic". select "token paste setup".
+it asks you to run a command on your local computer to get a token. open a new terminal, paste the command, copy the token back.
+select "opus 4.5" as your model. select "telegram bot" as your channel.
+step 4: create your telegram bot (5 min)
+open telegram. search "@botfather
+". send /newbot. name your bot. copy the token. paste into wizard.
+search "@useridbot
+". copy your user ID. paste into wizard.
+this makes sure only you can talk to your bot.
+step 5: give it an identity (5 min)
+clawdbot asks you questions in telegram:
+what should i call you? what should you call me? what's my purpose? what timezone are you in?
+answer these. your assistant is now alive.
+your first 3 wins (next 5 minutes)
+you just set up clawdbot. here's how to see it work immediately.
+win 1: the inbox testtell it: "check my last 10 emails and tell me which ones actually need a response."
+win 2: the research testtell it: "research [company you're curious about] and give me a 3-bullet summary of what they do."
+win 3: the reminder testtell it: "remind me to [something you've been putting off] tomorrow at 9am."
+all three take under 60 seconds. you'll have results before you finish your coffee.
+now you trust it. now you start giving it real work.
+the cost
+$20/month claude subscription. free AWS server.
+a human VA costs $500-2000/month and sleeps 8 hours. clawdbot runs 24/7 for $20.
+what to do after the quick wins
+add brave search so it can search the web. go to brave.com/search/api
+. get a free API key. tell your bot "set up brave search with this API key."
+connect your tools over time. github. google drive. gmail. calendar.
+then give it real tasks:
+
+    "research [company] and give me a one-pager"
+    "remind me to follow up with [name] in 3 days"
+    "draft a linkedin post about [topic]"
+    "check my calendar and find time for a call tuesday"
+    "summarize this article and draft a thank you email to the author"
+
+the skills are additive. every day it gets better.
+if something breaks, tell your bot "fix this" and paste the error. it usually fixes itself.
+use voice
+you don't have to type. use voice notes on telegram or whatsapp. talk to clawdbot while you walk, drive, do other things.
+some people run multiple agents in slack. set off one task, start another. they run in parallel.
+the window
+most people will screenshot this, bookmark it, and never set it up.
+don't be most people.
+the gap between "has a 24/7 AI assistant" and "doesn't" is about to get massive. the people setting up clawdbot today will have a head start everyone else spends months catching up on.
+check clawd.bot
+ for docs.

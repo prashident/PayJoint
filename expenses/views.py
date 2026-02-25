@@ -123,3 +123,30 @@ def add_dashboard_expense(request):
         return redirect('groups:dashboard')
     
     return redirect('groups:dashboard')
+
+
+@login_required
+def bulk_settle_group(request, invite_code):
+    group = get_object_or_404(Group, invite_code= invite_code)
+    
+    # Find expenses where:
+    # 1. It belongs to this group
+    # 2. You are in the participants
+    # 3. You are NOT the person who paid
+    # 4. You haven't already settled it
+    unsettled = group.expenses.filter(
+        participants=request.user
+    ).exclude(
+        paid_by=request.user
+    ).exclude(
+        settled_by=request.user
+    )
+
+    if unsettled.exists():
+        for expense in unsettled:
+            expense.settled_by.add(request.user)
+        messages.success(request, f"Successfully settled all your debts in {group.name}!")
+    else:
+        messages.info(request, "Nothing left to settle!")
+
+    return redirect('groups:group_detail', group_id=group.id)

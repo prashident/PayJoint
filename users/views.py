@@ -1,59 +1,64 @@
-# users/views.py
 import os
+import json
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib import messages
+from django.conf import settings
 from supabase import create_client, Client
 
 # Supabase client configuration
-supabase_url = os.environ.get("SUPABASE_URL", "https://tnbfyzliuicmstdkmlej.supabase.co")
-supabase_key = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRuYmZ5emxpdWljbXN0ZGttbGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MzI4ODM4MywiZXhwIjoyMDY4ODY0MzgzfQ.vAgT5fKkRtR8CBPP-eCy7pJNFDQiidYiS_etrDcDUO8")
+supabase_url = settings.SUPABASE_URL
+supabase_key = settings.SUPABASE_KEY
+
+# Initialize the client
 supabase: Client = create_client(supabase_url, supabase_key)
 
-
 def index_view(request):
-    """
-    Renders the index page.
-    Redirects authenticated users to their groups dashboard.
-    """
     if request.user.is_authenticated:
         return redirect('groups:dashboard')
     return render(request, 'users/index.html')
 
-
-# The following custom authentication views have been removed.
-# Django-Allauth now handles signup, login, and logout.
-# You no longer need:
-# - signup_view
-# - login_view
-# - logout_view
-
-
 @login_required
 def profile_detail_view(request):
     """
-    Displays the profile of the currently logged-in user.
+    Displays the one-page profile.
     """
     return render(request, 'users/profile_detail.html', {'user': request.user})
 
-
 @login_required
-def edit_profile_view(request):
+@require_POST
+def update_profile(request):
     """
-    Handles editing the user's profile.
+    AJAX endpoint to update first_name and last_name.
+    Syncs with local Django User and Supabase 'users' + 'profiles' tables.
     """
-    from .forms import EditProfileForm
-    from django.contrib import messages
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        # 1. Update Django Local Database
+        user.first_name = data.get('first_name', user.first_name)
+        user.last_name = data.get('last_name', user.last_name)
+        user.save()
+
+        # 2. Update Supabase 'users' table
+        # Matches your schema: {id: int8, first_name: text, last_name: text...}
+        supabase_data = {
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+        }
+        
+        # Syncing both tables as per your schema image
+        supabase.table("users").update(supabase_data).eq("id", user.id).execute()
+        supabase.table("profiles").update(supabase_data).eq("id", user.id).execute()
+
+        return JsonResponse({
+            "status": "success", 
+            "message": "Profile updated successfully!",
+            "full_name": f"{user.first_name} {user.last_name}".strip() or user.username
+        })
     
-    if request.method == 'POST':
-        form = EditProfileForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Profile updated successfully!")
-            return redirect('users:profile_detail')
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field.replace('_', ' ').title()}: {error}")
-    else:
-        form = EditProfileForm(instance=request.user)
-    return render(request, 'edit_profile_page.html', {'form': form})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
