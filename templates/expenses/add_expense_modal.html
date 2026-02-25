@@ -343,6 +343,8 @@ document.addEventListener('DOMContentLoaded', function() {
         amountInput.setAttribute('type', 'number');
         amountInput.setAttribute('min', '0');
         amountInput.setAttribute('step', '0.01');
+
+        if (amountInput.value === "0") amountInput.value = "";
     }
     const paidBySelect = document.getElementById('{{ form.paid_by.id_for_label }}');
     if (paidBySelect) {
