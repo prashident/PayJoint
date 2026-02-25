@@ -194,8 +194,19 @@
                 </section>
 
                 <section class="space-y-6">
+
+                    
                     <div class="flex items-center justify-between">
                         <h3 class="text-xl font-bold text-white">Previous Expenses</h3>
+                        <div class="relative">
+    <select id="paid-by-filter" onchange="filterExpenses()" 
+        class="bg-slate-800 border border-white/10 rounded-xl px-6 py-3 min-w-[160px] text-[12px] font-black uppercase tracking-widest text-slate-300 focus:outline-none focus:border-yellow-400/50 transition-all cursor-pointer">
+        <option value="all">Paid By All</option>
+        {% for member in members %}
+            <option value="{{ member.id }}">{{ member.username }}</option>
+        {% endfor %}
+    </select>
+</div>
 
                         {% if current_user_balance < 0 %} <form
                             action="{% url 'expenses:bulk_settle_group' group.invite_code %}" method="post">
@@ -208,9 +219,11 @@
                             {% endif %}
                     </div>
 
+                    
+
                     <div class="space-y-3 pr-2 custom-scrollbar max-h-[600px]" id="expenses-list">
                         {% for expense in expenses %}
-                        <div class="expense-item-wrapper">
+                        <div class="expense-item-wrapper" data-payer-id="{{ expense.paid_by.id }}">
                             <div
                                 class="glass-card rounded-[1.5rem] p-6 flex items-center justify-between {% if user in expense.settled_by.all %}opacity-80{% endif %}">
                                 <div class="flex items-center gap-6">
@@ -440,7 +453,7 @@
                             class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Amount</label>
                         <div class="relative group">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
-                            <input type="number" name="amount" x-model.number="totalAmount" placeholder="0" required
+                            <input type="number" name="amount" x-model.number="totalAmount" step="0.01" required
                                 class="w-full bg-slate-900/50 border border-white/5 rounded-2xl pl-10 pr-6 py-4 text-white text-right font-black amount-input">
                         </div>
                     </div>
@@ -562,6 +575,9 @@
                         <p class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
                             {% if member == user %}You{% else %}Member{% endif %}
                         </p>
+                        <p class="text-[9px] font-bold text-emerald-400 uppercase tracking-tighter mt-1">
+        Spent: ₹{{ member.total_spent_amount|floatformat:0 }}
+    </p>
                     </div>
                 </div>
 
@@ -635,9 +651,25 @@
 {% block extra_js %}
 <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script>
+
+    function filterExpenses() {
+    const selectedPayerId = document.getElementById('paid-by-filter').value;
+    const expenseItems = document.querySelectorAll('.expense-item-wrapper');
+
+    expenseItems.forEach(item => {
+        const itemPayerId = item.getAttribute('data-payer-id');
+        
+        // If 'all' is selected or the ID matches, show the item
+        if (selectedPayerId === 'all' || itemPayerId === selectedPayerId) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
     function expenseForm() {
         return {
-            totalAmount: null,
+            totalAmount: 0,
             selectedCategory: 'Misc',
             paidBy: '{{ user.id }}',
             selectedParticipants: [

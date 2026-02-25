@@ -303,10 +303,35 @@ def group_detail_view(request, group_id):
     if request.user not in group.members.all():
         messages.error(request, "You are not a member of this group.")
         return redirect('groups:dashboard')
+    
+    sort_option = request.GET.get('sort', 'latest')
+    sort_order_map = {
+        'latest': ['-created_at'],
+        'payer': ['paid_by__username', '-created_at'],
+        'type': ['category', '-created_at'],
+    }
+    order_by_fields = sort_order_map.get(sort_option, sort_order_map['latest'])
+
 
     # Optimization: prefetch participants and settled_by
     expenses = Expense.objects.filter(group=group).prefetch_related('participants', 'settled_by').order_by('-created_at')
+
+    expenses = (
+        Expense.objects.filter(group=group)
+        .prefetch_related('participants', 'settled_by')
+        .select_related('paid_by')
+        .order_by(*order_by_fields)
+    )
+
+
     members = group.members.all()
+
+    member_spent = {member.id: Decimal('0.00') for member in members}
+    for expense in expenses:
+        member_spent[expense.paid_by.id] += expense.amount
+
+    for member in members:
+        member.total_spent_amount = member_spent.get(member.id, Decimal('0.00'))
 
     # --- DEFINE TOTAL SPENT HERE ---
     total_spent = group.get_total_expenses_amount() or Decimal('0.00')
