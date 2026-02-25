@@ -341,7 +341,7 @@ def group_detail_view(request, group_id):
     if group.budget and group.budget > 0:
         remaining_budget = group.budget - total_spent
 
-    # 1. Dynamic Balance Calculation (excluding settled debts)
+    # 1. Calculate Net Balances for each member
     balances = {member.id: Decimal('0.00') for member in members}
     for expense in expenses:
         if not expense.participants.exists():
@@ -352,7 +352,6 @@ def group_detail_view(request, group_id):
         settled_ids = set(expense.settled_by.values_list('id', flat=True))
 
         for participant in expense.participants.all():
-            # If the specific split for this participant isn't settled
             if participant.id not in settled_ids:
                 if participant != payer:
                     balances[participant.id] -= share
@@ -360,23 +359,30 @@ def group_detail_view(request, group_id):
 
     # 2. Settlement Algorithm
     settlements = []
+    # Threshold for floating point precision edge cases
+    EPSILON = Decimal('0.01')
     # Convert dict to lists for the greedy algorithm
-    pos_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] > Decimal('0.01')], key=lambda x: x['bal'], reverse=True)
-    neg_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] < Decimal('-0.01')], key=lambda x: x['bal'])
+    pos_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] > EPSILON], key=lambda x: x['bal'], reverse=True)
+    neg_balances = sorted([{'user': m, 'bal': balances[m.id]} for m in members if balances[m.id] < -EPSILON], key=lambda x: x['bal'])
 
     i, j = 0, 0
     while i < len(neg_balances) and j < len(pos_balances):
+        # Determine the amount to settle: the minimum of what Giver owes vs what Receiver is owed
         amount = min(abs(neg_balances[i]['bal']), pos_balances[j]['bal'])
-        if amount > Decimal('0.01'):
+        
+        if amount > EPSILON:
             settlements.append({
                 'from_user': neg_balances[i]['user'],
                 'to_user': pos_balances[j]['user'],
-                'amount': amount.quantize(Decimal('1')) # Clean UI rounding
+                'amount': amount.quantize(Decimal('1')) # Clean rounding for UI
             })
+
         neg_balances[i]['bal'] += amount
         pos_balances[j]['bal'] -= amount
-        if abs(neg_balances[i]['bal']) < Decimal('0.01'): i += 1
-        if abs(pos_balances[j]['bal']) < Decimal('0.01'): j += 1
+        
+        # Move to next Giver/Receiver if their specific debt is cleared
+        if abs(neg_balances[i]['bal']) < EPSILON: i += 1
+        if abs(pos_balances[j]['bal']) < EPSILON: j += 1
     
     current_user_balance = balances.get(request.user.id, Decimal('0.00')).quantize(Decimal('0.01'))
 
