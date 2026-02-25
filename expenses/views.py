@@ -1,8 +1,10 @@
 # expenses/views.py
 import os
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import HttpResponse
 
 # Import Group model from the groups app
 from groups.models import Group
@@ -165,3 +167,40 @@ def bulk_settle_group(request, invite_code):
         messages.info(request, "Nothing left to settle!")
 
     return redirect('groups:group_detail', group_id=group.id)
+
+
+@login_required
+def export_expenses_csv(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    
+    # Security check: Ensure user is a member of the group
+    if request.user not in group.members.all():
+        messages.error(request, "Access denied.")
+        return redirect('groups:dashboard')
+
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{group.name}_expenses.csv"'
+
+    writer = csv.writer(response)
+    # Write Header Row
+    writer.writerow(['Date', 'Description', 'Category', 'Amount (₹)', 'Paid By', 'Participants', 'Settled By'])
+
+    # Fetch all expenses for this group
+    expenses = Expense.objects.filter(group=group).order_by('-created_at')
+
+    for expense in expenses:
+        participants = ", ".join([p.username for p in expense.participants.all()])
+        settled_by = ", ".join([s.username for s in expense.settled_by.all()])
+        
+        writer.writerow([
+            expense.created_at.strftime("%Y-%m-%d %H:%M"),
+            expense.description,
+            expense.category,
+            expense.amount,
+            expense.paid_by.username,
+            participants,
+            settled_by
+        ])
+
+    return response

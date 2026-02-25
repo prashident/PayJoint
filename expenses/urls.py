@@ -12,5 +12,6 @@ urlpatterns = [
     # Change from uuid to str to accept the shorter code
     path('group/<str:invite_code>/settle-all/', views.bulk_settle_group, name='bulk_settle_group'),
     path('bulk-unsettle/<str:invite_code>/', views.bulk_unsettle_group, name='bulk_unsettle_group'),
+    path('<uuid:group_id>/export-csv/', views.export_expenses_csv, name='export_expenses_csv'),
     # You might add paths for edit_expense, delete_expense later
 ]
